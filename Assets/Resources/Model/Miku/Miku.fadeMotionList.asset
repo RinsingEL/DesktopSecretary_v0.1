@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 403ae2dd693bb1d4b924f6b8d206b053, type: 3}
+  m_Name: Miku.fadeMotionList
+  m_EditorClassIdentifier: 
+  MotionInstanceIds: c4e3fdff8ee3fdff66e3fdff5cd5fdff34d5fdff0cd5fdffe4d4fdffbcd4fdff
+  CubismFadeMotionObjects:
+  - {fileID: 11400000, guid: 0e562fba4ce941b4486da8dae9f3b80a, type: 2}
+  - {fileID: 11400000, guid: e41a8f1f75640764cb853f1202f6757b, type: 2}
+  - {fileID: 11400000, guid: 2a7885aaee62b9a4790ba5cc6b09899c, type: 2}
+  - {fileID: 11400000, guid: 0ae18c60633860e4aafb6f4890b94845, type: 2}
+  - {fileID: 11400000, guid: 323c55155939b744c9e7b171db8982f8, type: 2}
+  - {fileID: 11400000, guid: 7230b52bb15c4d64f94e369ac0ea7e3a, type: 2}
+  - {fileID: 11400000, guid: f55f9dc0b6cc91e45945d8d840fd3a82, type: 2}
+  - {fileID: 11400000, guid: e406713777ccce34abf33ffcae9f76dc, type: 2}
