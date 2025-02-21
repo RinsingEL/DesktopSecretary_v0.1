@@ -1,18 +1,35 @@
+using Core.Framework.FGUI;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class ResourcesManager : MonoBehaviour
+namespace Core.Framework.Resource
 {
-    // Start is called before the first frame update
-    void Start()
+    public class ResourcesManager : MonoBehaviour
     {
-        
-    }
+        private static ResourcesManager _instance;
+        public static ResourcesManager Instance
+        {
+            get
+            {
+                if (_instance == null)
+                {
+                    var go = new GameObject("ResourceManager");
+                    DontDestroyOnLoad(go);
+                    _instance = go.AddComponent<ResourcesManager>();
+                }
+                return _instance;
+            }
+        }
+        public FGUIResourceManager FGUIResourceManager;
+        public DBSourceManager DBSourceManager;
+        void Awake()
+        {
+            FGUIResourceManager = gameObject.AddComponent<FGUIResourceManager>();
+            DBSourceManager = gameObject.AddComponent<DBSourceManager>();
+            DBSourceManager.Init();
+        }
 
-    // Update is called once per frame
-    void Update()
-    {
-        
     }
 }
+

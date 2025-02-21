@@ -9,21 +9,6 @@ namespace Core.Framework.FGUI
 {
     public class FGUIResourceManager : MonoBehaviour
     {
-        private static FGUIResourceManager _instance;
-        public static FGUIResourceManager Instance
-        {
-            get
-            {
-                if (_instance == null)
-                {
-                    var go = new GameObject("FGUIResourceManager");
-                    DontDestroyOnLoad(go);
-                    _instance = go.AddComponent<FGUIResourceManager>();
-                }
-                return _instance;
-            }
-        }
-
         // 已加载的包名缓存
         private HashSet<string> _loadedPackages = new HashSet<string>();
 

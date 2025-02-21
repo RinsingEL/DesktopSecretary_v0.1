@@ -1,11 +1,13 @@
 using Com.Module.Chat;
 using Com.Module.CommonResources;
 using Com.Module.MainUI;
+using Com.Module.Schedule;
 using Core.Framework.Config;
 using Core.Framework.FGUI;
 using Core.Framework.Plugin;
-using FairyGUI;
+using Core.Framework.Resource;
 using Module.chat;
+using Schedule;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -16,8 +18,9 @@ public class StartGame : MonoBehaviour
     private Dictionary<Type, PluginBase> _plugins = new Dictionary<Type, PluginBase>();
     private void Awake()
     {
-        // 初始化核心插件
+        // 初始化模块插件
         Install<ChatPlugin>();
+        Install<SchedulePlugin>();
         InitializeManagers();
         ApplyConfigurations();
         PreloadEssentialResources();
@@ -70,7 +73,7 @@ public class StartGame : MonoBehaviour
     private void PreloadEssentialResources()
     {
         // 预加载必要的UI包（如Common包）
-        FGUIResourceManager.Instance.AddPackageAsync("UI/CommonResources", () =>
+        ResourcesManager.Instance.FGUIResourceManager.AddPackageAsync("UI/CommonResources", () =>
         {
             Debug.Log("Common包加载完成！");
             
@@ -85,6 +88,7 @@ public class StartGame : MonoBehaviour
         ChatBinder.BindAll();
         CommonResourcesBinder.BindAll();
         MainUIBinder.BindAll();
+        ScheduleBinder.BindAll();
     }
     private void OnDestroy()
     {

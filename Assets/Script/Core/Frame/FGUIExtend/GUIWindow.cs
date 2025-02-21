@@ -1,8 +1,7 @@
 // GUIWindow.cs
 using FairyGUI;
-using System;
-using Unity.VisualScripting;
 using UnityEngine;
+using Core.Framework.Resource;
 
 namespace Core.Framework.FGUI
 {
@@ -55,7 +54,7 @@ namespace Core.Framework.FGUI
         {
             if (_initialized) return;
             // 加载资源包
-            FGUIResourceManager.Instance.AddPackage(Param.packagePath);
+            ResourcesManager.Instance.FGUIResourceManager.AddPackage(Param.packagePath);
 
             var Type = GetType();
 
@@ -87,7 +86,7 @@ namespace Core.Framework.FGUI
         /// <summary>
         /// 子类实现的初始化方法
         /// </summary>
-        protected abstract void OnInit(GComponent root);
+        protected abstract void OnInit(GComponent com);
 
         /// <summary>
         /// 销毁窗口

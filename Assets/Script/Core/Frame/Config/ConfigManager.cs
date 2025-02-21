@@ -1,4 +1,8 @@
 // ConfigManager.cs
+using Core.Framework.Utility;
+using System;
+using System.Collections.Generic;
+using System.Data;
 using UnityEngine;
 
 namespace Core.Framework.Config
@@ -80,7 +84,6 @@ namespace Core.Framework.Config
         }
     }
 
-    // GameConfigManager.cs
     public class UserSettingManager
     {
         public string Language { get; private set; } = "zh-CN";

@@ -1,4 +1,5 @@
 using Com.Module.Chat;
+using Com.Module.Schedule;
 using Core.Framework.FGUI;
 using FairyGUI;
 
@@ -9,7 +10,7 @@ namespace Com.Module.MainUI
         public void Init()
         {
             m_MenuList.itemRenderer = RenderListItem;
-            m_MenuList.numItems = 1;
+            m_MenuList.numItems = 2;
         }
         public void RenderListItem(int index, GObject Menubtn)
         {
@@ -28,7 +29,7 @@ namespace Com.Module.MainUI
 
         private void OpenCalendarPanel(EventContext context)
         {
-            
+            GUIManager.Instance.ShowWindow<CalendarWindow>();
         }
 
         public void OpenSettingPanel(EventContext context)
