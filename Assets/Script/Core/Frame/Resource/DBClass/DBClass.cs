@@ -21,7 +21,7 @@ namespace Core.Framework.Resource
             public int Priority { get; set; }             // 任务优先级
             public int Status { get; set; }               // 任务状态
             public DateTime? DueDate { get; set; }        // 任务截止日期
-            public DateTime CreatedAt { get; set; }       // 任务创建时间
+            public DateTime StartedAt { get; set; }       // 任务开始时间
             public DateTime UpdatedAt { get; set; }       // 任务最后更新时间
 
            

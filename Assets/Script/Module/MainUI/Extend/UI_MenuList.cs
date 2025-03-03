@@ -29,6 +29,7 @@ namespace Com.Module.MainUI
 
         private void OpenCalendarPanel(EventContext context)
         {
+            //记得在这打开窗口
             GUIManager.Instance.ShowWindow<CalendarWindow>();
         }
 

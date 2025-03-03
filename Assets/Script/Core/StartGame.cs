@@ -7,7 +7,6 @@ using Core.Framework.FGUI;
 using Core.Framework.Plugin;
 using Core.Framework.Resource;
 using Module.chat;
-using Schedule;
 using System;
 using System.Collections.Generic;
 using UnityEngine;

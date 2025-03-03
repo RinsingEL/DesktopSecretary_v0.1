@@ -1,11 +1,10 @@
 using Core.Framework.FGUI;
 using FairyGUI;
-using Schedule;
+using System;
 namespace Com.Module.Schedule
 {
     public class CalendarWindow : GUIWindow
     {
-        CalendarData CalendarData;
         UI_CalendarWindow rootWindow;
     public CalendarWindow()
         {
@@ -17,7 +16,8 @@ namespace Com.Module.Schedule
         protected override void OnInit(GComponent com)
         {
             rootWindow = com as UI_CalendarWindow;
-            
+            rootWindow.Init();
+            rootWindow.m_closeBtn.onClick.Set(Hide);
         }
 
     }

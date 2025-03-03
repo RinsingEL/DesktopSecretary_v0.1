@@ -76,11 +76,15 @@ namespace Core.Framework.FGUI
                 _root.SetSize(GRoot.inst.width, GRoot.inst.height);
             }
 
-            // 初始化组件
+            // 初始化组件 
             OnInit(_root);
             // 居中显示
             Center();
             _initialized = true;
+        }
+        public virtual void InitializeParam(ShowWindowParam param)
+        {
+            
         }
 
         /// <summary>
@@ -151,5 +155,11 @@ namespace Core.Framework.FGUI
         protected virtual void OnShow() { }
         protected virtual void OnHide() { }
         #endregion
+        public abstract class ShowWindowParam
+        {
+            public ShowWindowParam()
+            {
+            }
+        }
     }
 }

@@ -6,6 +6,7 @@ using FairyGUI.Utils;
 using Com.Module.CommonResources;
 using Module.chat;
 using Core.Framework.Config;
+using Core.Framework.Event;
 
 namespace Com.Module.Chat
 {
@@ -30,7 +31,7 @@ namespace Com.Module.Chat
         }
         public void ResetSetting(EventContext context)
         {
-            ChatPlugin.Instance.SendChatMessage("ÄãºÃ");
+            EventManager.Instance.Trigger<string>(ClientEvent.ON_SEND_CHAT_REQUEST,"ÄãºÃ");
             /*            ConfigManager.Instance.Network.apiKey = string.Empty;
                         m_inputTxt1.text = string.Empty;*/
         }

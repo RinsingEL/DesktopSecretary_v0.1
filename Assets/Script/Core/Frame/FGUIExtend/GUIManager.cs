@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using FairyGUI;
 using UnityEngine;
@@ -90,6 +91,64 @@ namespace Core.Framework.FGUI
 
             // 异常情况处理
             Debug.LogError($"窗口 [{type.Name}] 处于未知状态");
+            return null;
+        }
+        public GUIWindow ShowWindow(GUIWindow.ShowWindowParam showWindowParam)
+        {
+            if (showWindowParam == null)
+            {
+                Debug.LogError("ShowWindowParam cannot be null");
+                return null;
+            }
+
+            // 获取窗口类型
+            Type windowType = showWindowParam.GetType().DeclaringType;
+            if (windowType == null || !typeof(GUIWindow).IsAssignableFrom(windowType))
+            {
+                Debug.LogError("Invalid window type derived from ShowWindowParam");
+                return null;
+            }
+
+            // 检查隐藏窗口
+            if (_hiddenWindows.TryGetValue(windowType, out var hiddenWindow))
+            {
+                _hiddenWindows.Remove(windowType);
+                _activeWindows[windowType] = hiddenWindow;
+                hiddenWindow.Show();
+                return hiddenWindow;
+            }
+
+            // 检查现有窗口
+            if (_allWindows.TryGetValue(windowType, out var existingWindow))
+            {
+                if (_activeWindows.ContainsKey(windowType))
+                {
+                    Debug.LogWarning($"窗口 [{windowType.Name}] 已经处于显示状态");
+                    return existingWindow;
+                }
+            }
+
+            // 创建新窗口
+            try
+            {
+                GUIWindow newWindow = (GUIWindow)Activator.CreateInstance(windowType);
+                if (newWindow != null)
+                {
+                    newWindow.InitializeParam(showWindowParam);
+                    newWindow.Initialize();
+                    _allWindows[windowType] = newWindow;
+                    _activeWindows[windowType] = newWindow;
+                    newWindow.Show();
+                    return newWindow;
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"创建窗口 [{windowType.Name}] 失败: {e.Message}");
+                return null;
+            }
+
+            Debug.LogError($"窗口 [{windowType.Name}] 创建失败");
             return null;
         }
 

@@ -1,5 +1,6 @@
 using Com.Module.Chat;
 using Core.Framework.Config;
+using Core.Framework.Event;
 using Core.Framework.Network;
 using Core.Framework.Network.ChatSystem;
 using Core.Framework.Plugin;
@@ -25,15 +26,15 @@ namespace Module.chat
         }
         protected override void OnRegister()
         {
-
+            EventManager.Instance.AddEvent<string>(ClientEvent.ON_SEND_CHAT_REQUEST, OnSendChatMessage);
         }
 
         protected override void OnUninstall()
         {
-
+            EventManager.Instance.RemoveEvent<string>(ClientEvent.ON_SEND_CHAT_REQUEST, OnSendChatMessage);
         }
 
-        public void SendChatMessage(string msg)
+        public void OnSendChatMessage(string msg)
         {
             var body = new ChatClass.ChatReuestBody();
             body.model = ConfigManager.Instance.Network.Model;

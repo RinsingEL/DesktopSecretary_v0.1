@@ -9,13 +9,19 @@ namespace Com.Module.Schedule
     {
         public Controller m_IsDetail;
         public Controller m_IsShowDay;
-        public GGraph m_bg;
+        public GGraph m_bgr;
         public GList m_calendar;
         public GTextField m_month;
+        public GButton m_prevBtn;
+        public GButton m_nextBtn;
+        public GButton m_todayBtn;
+        public GButton m_closeBtn;
         public GGraph m_bgl;
         public GTextField m_dateTxt;
-        public GTextField m_descriptionTxt;
         public GList m_taskList;
+        public GButton m_detailCollapseBtn;
+        public GButton m_EditBtn;
+        public GButton m_addBtn;
         public GGroup m_left;
         public const string URL = "ui://msqew0pqsiyd0";
 
@@ -30,13 +36,19 @@ namespace Com.Module.Schedule
 
             m_IsDetail = GetController("IsDetail");
             m_IsShowDay = GetController("IsShowDay");
-            m_bg = (GGraph)GetChild("bg");
+            m_bgr = (GGraph)GetChild("bgr");
             m_calendar = (GList)GetChild("calendar");
             m_month = (GTextField)GetChild("month");
+            m_prevBtn = (GButton)GetChild("prevBtn");
+            m_nextBtn = (GButton)GetChild("nextBtn");
+            m_todayBtn = (GButton)GetChild("todayBtn");
+            m_closeBtn = (GButton)GetChild("closeBtn");
             m_bgl = (GGraph)GetChild("bgl");
             m_dateTxt = (GTextField)GetChild("dateTxt");
-            m_descriptionTxt = (GTextField)GetChild("descriptionTxt");
             m_taskList = (GList)GetChild("taskList");
+            m_detailCollapseBtn = (GButton)GetChild("detailCollapseBtn");
+            m_EditBtn = (GButton)GetChild("EditBtn");
+            m_addBtn = (GButton)GetChild("addBtn");
             m_left = (GGroup)GetChild("left");
         }
     }

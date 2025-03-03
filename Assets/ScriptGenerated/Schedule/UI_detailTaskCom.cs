@@ -7,7 +7,7 @@ namespace Com.Module.Schedule
 {
     public partial class UI_detailTaskCom : GComponent
     {
-        public GGraph m_titleBg;
+        public GButton m_taskBtn;
         public GTextField m_titleTxt;
         public GTextField m_taskDesTxt;
         public const string URL = "ui://msqew0pqdipb6";
@@ -21,7 +21,7 @@ namespace Com.Module.Schedule
         {
             base.ConstructFromXML(xml);
 
-            m_titleBg = (GGraph)GetChild("titleBg");
+            m_taskBtn = (GButton)GetChild("taskBtn");
             m_titleTxt = (GTextField)GetChild("titleTxt");
             m_taskDesTxt = (GTextField)GetChild("taskDesTxt");
         }
