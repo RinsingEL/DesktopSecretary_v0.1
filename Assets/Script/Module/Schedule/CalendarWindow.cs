@@ -5,8 +5,9 @@ namespace Com.Module.Schedule
 {
     public class CalendarWindow : GUIWindow
     {
-        UI_CalendarWindow rootWindow;
-    public CalendarWindow()
+        private UI_CalendarWindow rootWindow;
+        private CalendarViewModel _viewModel;
+        public CalendarWindow()
         {
             Param.packagePath = "UI/Schedule";
             Param.packageName = "Schedule";
@@ -16,11 +17,19 @@ namespace Com.Module.Schedule
         protected override void OnInit(GComponent com)
         {
             rootWindow = com as UI_CalendarWindow;
-            rootWindow.Init();
+            _viewModel = new CalendarViewModel();
+            rootWindow.Init(_viewModel);
             rootWindow.m_closeBtn.onClick.Set(Hide);
         }
-
+        protected override void BeforeShow()
+        {
+            base.BeforeShow();
+            rootWindow.BeforeShow();
+        }
+        protected override void OnHide()
+        {
+            base.OnHide();
+            rootWindow.OnHide();
+        }
     }
 }
-
-

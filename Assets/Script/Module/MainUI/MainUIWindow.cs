@@ -14,6 +14,7 @@ public class MainUIWindow : GUIWindow
         Param.packageName = "MainUI";
         Param.componentName = "MainWindow";
         Param.Layer = UILayer.Main;
+        Param.CloseOnClickOutside = false;
     }
     protected override void OnInit(GComponent com)
     {

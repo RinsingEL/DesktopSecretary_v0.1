@@ -13,6 +13,8 @@ namespace Com.Module.Schedule
         public GTextInput m_desInput;
         public GButton m_saveBtn;
         public GButton m_cancelBtn;
+        public GComponent m_startinput;
+        public GComponent m_endInput;
         public const string URL = "ui://msqew0pqgbhr7";
 
         public static UI_EditWindow CreateInstance()
@@ -30,6 +32,8 @@ namespace Com.Module.Schedule
             m_desInput = (GTextInput)GetChild("desInput");
             m_saveBtn = (GButton)GetChild("saveBtn");
             m_cancelBtn = (GButton)GetChild("cancelBtn");
+            m_startinput = (GComponent)GetChild("startinput");
+            m_endInput = (GComponent)GetChild("endInput");
         }
     }
 }

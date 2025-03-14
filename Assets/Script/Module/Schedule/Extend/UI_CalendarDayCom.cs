@@ -39,8 +39,8 @@ namespace Com.Module.Schedule
 
         private void OnRenderItem(int index, GObject item)
         {
-            var taskItem = item as UI_detailTaskCom;
-            taskItem.m_titleTxt.text = tasks[index].Title;
+            var taskItem = item as UI_CalendarDayTaskCom;
+            taskItem.m_taskTitle.text = tasks[index].Title;
         }
     }
 }

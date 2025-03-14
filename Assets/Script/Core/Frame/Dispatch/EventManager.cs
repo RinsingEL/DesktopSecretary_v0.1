@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 namespace Core.Framework.Event
 {
-    // 事件管理器单例类
     public class EventManager
     {
         private static EventManager _instance;
@@ -136,9 +135,41 @@ namespace Core.Framework.Event
         {
             eventDictionary.Clear();
         }
+        //新增3个的，元组不好用啊
+        internal void AddEvent<T1, T2, T3>(string eventName, Action<T1, T2 , T3> handler)
+        {
+            if (eventDictionary.TryGetValue(eventName, out Delegate del))
+            {
+                eventDictionary[eventName] = (Action<T1, T2 , T3>)del + handler;
+            }
+            else
+            {
+                eventDictionary[eventName] = handler;
+            }
+        }
+
+        internal void RemoveEvent<T1, T2, T3>(string eventName, Action<T1, T2, T3> handler)
+        {
+            if (eventDictionary.TryGetValue(eventName, out Delegate del))
+            {
+                eventDictionary[eventName] = (Action<T1, T2 , T3>)del - handler;
+                if (eventDictionary[eventName] == null)
+                {
+                    eventDictionary.Remove(eventName);
+                }
+            }
+        }
+
+        internal void Trigger<T1, T2, T3>(string eventName, T1 param1, T2 param2 , T3 param3)
+        {
+            if (eventDictionary.TryGetValue(eventName, out Delegate del))
+            {
+                (del as Action<T1, T2 , T3>)?.Invoke(param1, param2 , param3);
+            }
+        }
     }
 
-    // 用于定义事件名的静态类
+    // 用于定义事件名的静态类linww，后续改成int的，用string太蠢了
     public static class ClientEvent
     {
         // 已有的全局事件
@@ -151,9 +182,15 @@ namespace Core.Framework.Event
         public const string UPDATE_DETAIL_VIEW = "UPDATE_DETAIL_VIEW"; // 更新详情视图
         public const string REFRESH_CALENDAR = "REFRESH_CALENDAR";     // 刷新日历
         public const string ON_SEND_CHAT_REQUEST = "ON_SEND_CHAT_REQUEST";//发送信息后
+        public const string ON_SEND_FUNC_REQUEST = "ON_SEND_FUNC_REQUEST";//发送信息后
         public const string UPDATE_CALENDAR_REQUEST = "ON_CALENDAR_INFO_REQUEST";
         public const string UPDATE_CALENDAR_VIEW = "UPDATE_CALENDAR_VIEW";
         public const string UPDATE_CALENDAR_INFO = "UPDATE_CALENDAR_INFO";//更新存储的数据
-        // 在这里添加事件名
+
+        public const string ON_GLOBAL_CFG_CHANGE = "ON_GLOBAL_CFG_CHANGE";
+
+        //桌宠
+        public const string ON_CLICK_PET = "ON_CLICK_PET";
+        public const string ON_PET_EMOTION_CHANGE = "ON_PET_EMOTION_CHANGE";
     }
 }

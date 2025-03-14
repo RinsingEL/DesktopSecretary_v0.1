@@ -20,7 +20,6 @@ namespace Com.Module.Schedule
         public GTextField m_dateTxt;
         public GList m_taskList;
         public GButton m_detailCollapseBtn;
-        public GButton m_EditBtn;
         public GButton m_addBtn;
         public GGroup m_left;
         public const string URL = "ui://msqew0pqsiyd0";
@@ -47,7 +46,6 @@ namespace Com.Module.Schedule
             m_dateTxt = (GTextField)GetChild("dateTxt");
             m_taskList = (GList)GetChild("taskList");
             m_detailCollapseBtn = (GButton)GetChild("detailCollapseBtn");
-            m_EditBtn = (GButton)GetChild("EditBtn");
             m_addBtn = (GButton)GetChild("addBtn");
             m_left = (GGroup)GetChild("left");
         }

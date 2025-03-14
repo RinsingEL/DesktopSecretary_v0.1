@@ -15,7 +15,7 @@ namespace Core.Framework.Resource
         // 用于日历表的开发
         public class Task : tableBase
         {
-            public int TaskID { get; set; }               // 任务唯一标识
+            public string TaskID { get; set; }               // 任务唯一标识
             public string Title { get; set; }             // 任务标题
             public string Description { get; set; }       // 任务描述
             public int Priority { get; set; }             // 任务优先级

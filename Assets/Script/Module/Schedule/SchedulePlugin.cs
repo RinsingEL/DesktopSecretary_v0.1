@@ -55,5 +55,10 @@ namespace Com.Module.Schedule
             EventManager.Instance.RemoveEvent(ClientEvent.UPDATE_CALENDAR_INFO, OnUpdateInfo);
             EventManager.Instance.RemoveEvent(ClientEvent.UPDATE_CALENDAR_REQUEST, OnCalendarInfoResponse);
         }
+
+        protected override void OnUpdate()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

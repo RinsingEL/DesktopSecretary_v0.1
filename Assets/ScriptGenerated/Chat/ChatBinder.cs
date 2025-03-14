@@ -9,8 +9,11 @@ namespace Com.Module.Chat
         public static void BindAll()
         {
             UIObjectFactory.SetPackageItemExtension(UI_HistoryPanel.URL, typeof(UI_HistoryPanel));
+            UIObjectFactory.SetPackageItemExtension(UI_dialogCom.URL, typeof(UI_dialogCom));
             UIObjectFactory.SetPackageItemExtension(UI_MenuWindow.URL, typeof(UI_MenuWindow));
             UIObjectFactory.SetPackageItemExtension(UI_SettingPanel.URL, typeof(UI_SettingPanel));
+            UIObjectFactory.SetPackageItemExtension(UI_ChatWindow.URL, typeof(UI_ChatWindow));
+            UIObjectFactory.SetPackageItemExtension(UI_DialoguePanel.URL, typeof(UI_DialoguePanel));
         }
     }
 }

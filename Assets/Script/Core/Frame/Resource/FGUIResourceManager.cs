@@ -1,4 +1,3 @@
-// FGUIResourceManager.cs
 using System.Collections;
 using System.Collections.Generic;
 using Core.Framework.Utility;
@@ -65,7 +64,6 @@ namespace Core.Framework.FGUI
         // 异步加载协程
         private IEnumerator LoadPackageRoutine(string packageName, System.Action onComplete)
         {
-            // 异步加载（实际加载逻辑需根据项目调整）
             yield return null;
             UIPackage.AddPackage(packageName);
             _loadedPackages.Add(packageName);
