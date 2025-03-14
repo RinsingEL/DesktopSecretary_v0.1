@@ -9,6 +9,8 @@ namespace Com.Module.CommonResources
         public static void BindAll()
         {
             UIObjectFactory.SetPackageItemExtension(UI_frameClose.URL, typeof(UI_frameClose));
+            UIObjectFactory.SetPackageItemExtension(UI_InputAndSelectCom.URL, typeof(UI_InputAndSelectCom));
+            UIObjectFactory.SetPackageItemExtension(UI_SelectItem.URL, typeof(UI_SelectItem));
         }
     }
 }

@@ -1,4 +1,3 @@
-// FGUIResourceManager.cs
 using System.Collections;
 using System.Collections.Generic;
 using Core.Framework.Utility;
@@ -9,21 +8,6 @@ namespace Core.Framework.FGUI
 {
     public class FGUIResourceManager : MonoBehaviour
     {
-        private static FGUIResourceManager _instance;
-        public static FGUIResourceManager Instance
-        {
-            get
-            {
-                if (_instance == null)
-                {
-                    var go = new GameObject("FGUIResourceManager");
-                    DontDestroyOnLoad(go);
-                    _instance = go.AddComponent<FGUIResourceManager>();
-                }
-                return _instance;
-            }
-        }
-
         // 已加载的包名缓存
         private HashSet<string> _loadedPackages = new HashSet<string>();
 
@@ -80,7 +64,6 @@ namespace Core.Framework.FGUI
         // 异步加载协程
         private IEnumerator LoadPackageRoutine(string packageName, System.Action onComplete)
         {
-            // 异步加载（实际加载逻辑需根据项目调整）
             yield return null;
             UIPackage.AddPackage(packageName);
             _loadedPackages.Add(packageName);

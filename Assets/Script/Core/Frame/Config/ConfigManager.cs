@@ -1,11 +1,14 @@
 // ConfigManager.cs
+using Core.Framework.Utility;
+using System;
+using System.Collections.Generic;
+using System.Data;
 using UnityEngine;
 
 namespace Core.Framework.Config
 {
     public class ConfigManager
     {
-        // 单例模式
         private static ConfigManager instance;
         public static ConfigManager Instance => instance ??= new ConfigManager();
 
@@ -14,7 +17,6 @@ namespace Core.Framework.Config
         public UIConfigManager UI { get; } = new UIConfigManager();
         public UserSettingManager Game { get; } = new UserSettingManager();
 
-        // 初始化方法
         public void Initialize()
         {
             LoadAllConfigs();
@@ -37,67 +39,57 @@ namespace Core.Framework.Config
         }
     }
 
-    // UIConfigManager.cs
     public class UIConfigManager
     {
-        public string DefaultFont { get; private set; } = "Arial";
-        public Color ThemeColor { get; private set; } = Color.white;
-        public float UIScale { get; private set; } = 1.0f;
+        public float UIScale = 1.0f;
+        public float HorizontalOffset = 0f; // 横偏移量
+        public float VerticalOffset = 0f;   // 竖偏移量
 
         public void Load()
         {
-            // 从持久化存储加载UI配置
-            DefaultFont = PlayerPrefs.GetString("UI_DefaultFont", DefaultFont);
-            ThemeColor = LoadColor("UI_ThemeColor", ThemeColor);
             UIScale = PlayerPrefs.GetFloat("UI_Scale", UIScale);
+            HorizontalOffset = PlayerPrefs.GetFloat("UI_HorizontalOffset", HorizontalOffset);
+            VerticalOffset = PlayerPrefs.GetFloat("UI_VerticalOffset", VerticalOffset);
         }
 
         public void Save()
         {
-            // 保存UI配置到持久化存储
-            PlayerPrefs.SetString("UI_DefaultFont", DefaultFont);
-            SaveColor("UI_ThemeColor", ThemeColor);
             PlayerPrefs.SetFloat("UI_Scale", UIScale);
-        }
-
-        private Color LoadColor(string key, Color defaultColor)
-        {
-            if (PlayerPrefs.HasKey(key))
-            {
-                string colorHex = PlayerPrefs.GetString(key);
-                if (ColorUtility.TryParseHtmlString(colorHex, out Color color))
-                {
-                    return color;
-                }
-            }
-            return defaultColor;
-        }
-
-        private void SaveColor(string key, Color color)
-        {
-            string colorHex = ColorUtility.ToHtmlStringRGBA(color);
-            PlayerPrefs.SetString(key, $"#{colorHex}");
+            PlayerPrefs.SetFloat("UI_HorizontalOffset", HorizontalOffset);
+            PlayerPrefs.SetFloat("UI_VerticalOffset", VerticalOffset);
         }
     }
 
-    // GameConfigManager.cs
     public class UserSettingManager
     {
-        public string Language { get; private set; } = "zh-CN";
-        public float MasterVolume { get; private set; } = 1.0f;
+        public string Prompt = "";
+
+        // 用属性动态判断打开没有
+        public bool IsFirstTimeOpen
+        {
+            get
+            {
+                // 如果 PlayerPrefs 中没有这个键，说明是第一次打开
+                return !PlayerPrefs.HasKey("Game_IsFirstTimeOpen");
+            }
+        }
 
         public void Load()
         {
-            // 从持久化存储加载游戏配置
-            Language = PlayerPrefs.GetString("Game_Language", Language);
-            MasterVolume = PlayerPrefs.GetFloat("Game_MasterVolume", MasterVolume);
+            Prompt = PlayerPrefs.GetString("Game_Prompt", Prompt);
+
+            // 如果是第一次打开，初始化时保存一个标志
+            if (IsFirstTimeOpen)
+            {
+                PlayerPrefs.SetInt("Game_IsFirstTimeOpen", 0); // 0 表示已打开过
+                PlayerPrefs.Save(); // 立即保存
+            }
         }
 
         public void Save()
         {
-            // 保存游戏配置到持久化存储
-            PlayerPrefs.SetString("Game_Language", Language);
-            PlayerPrefs.SetFloat("Game_MasterVolume", MasterVolume);
+            PlayerPrefs.SetString("Game_Prompt", Prompt);
+            PlayerPrefs.Save();
         }
     }
 }

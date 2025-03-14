@@ -1,4 +1,3 @@
-// CoroutineManager.cs
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -64,7 +63,7 @@ namespace Core.Framework.Utility
             return StartManagedCoroutine(IntervalRoutine(interval, callback, repeatCount));
         }
 
-        // 协程包装器（自动清理）
+        // 协程包装器，用完删掉
         private IEnumerator WrappedCoroutine(string coroutineId, IEnumerator routine)
         {
             yield return routine;

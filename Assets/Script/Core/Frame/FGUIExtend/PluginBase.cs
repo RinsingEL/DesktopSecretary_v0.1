@@ -5,23 +5,23 @@ using UnityEngine.EventSystems;
 namespace Core.Framework.Plugin
 {
     /// <summary>
-    /// Plugin 基类，不继承 MonoBehaviour，提供单例模式、事件交互和生命周期管理
+    /// 插件基类，记得写完在StartGame注册
     /// </summary>
     public abstract class PluginBase
     {
         // 是否已初始化
         private bool _isInitialized = false;
 
-        /// <summary>
-        /// 注册插件（手动调用或通过依赖管理器触发）
-        /// </summary>
         public void Register()
         {
             if (_isInitialized) return;
             OnRegister();
             _isInitialized = true;
         }
-
+        public void Update()
+        {
+            OnUpdate();//在主脚本里面用，还是老实用unity生命周期管理了
+        }
         /// <summary>
         /// 卸载插件
         /// </summary>
@@ -31,18 +31,8 @@ namespace Core.Framework.Plugin
             OnUninstall();
             _isInitialized = false;
         }
-
-        //--------------------------------------------------
-        // 虚方法（子类实现）
-        //--------------------------------------------------
-        /// <summary>
-        /// 注册事件、初始化数据等
-        /// </summary>
         protected abstract void OnRegister();
-
-        /// <summary>
-        /// 清理事件、释放资源等
-        /// </summary>
+        protected abstract void OnUpdate();
         protected abstract void OnUninstall();
     }
 }

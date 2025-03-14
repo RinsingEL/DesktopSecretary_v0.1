@@ -1,8 +1,8 @@
-// GUIWindow.cs
 using FairyGUI;
-using System;
-using Unity.VisualScripting;
 using UnityEngine;
+using Core.Framework.Resource;
+using Core.Framework.Event;
+using Core.Framework.Utility;
 
 namespace Core.Framework.FGUI
 {
@@ -21,19 +21,21 @@ namespace Core.Framework.FGUI
         #region 窗口配置
         public struct GUIParam
         {
-            public string packagePath;  // FGUI包路径
-            public string packageName;  // FGUI包名
-            public string componentName; // 组件名
+            public string packagePath;
+            public string packageName;
+            public string componentName;
             public bool IsFullScreen;
             public bool IsFit;
             public UILayer Layer;
-            public bool CloseOnClickOutside; // 点击外部关闭
+            public bool CloseOnClickOutside;
         }
 
         public GUIParam Param;
-        public GComponent _root;     // 窗口根组件
-        private bool _isShown;          // 是否已显示
+        public GComponent _root;
+        private bool _isShown;
         private bool _initialized = false;
+        private bool _isDataReady = false;
+        private bool _isOutside = true;
         #endregion
 
         #region 生命周期
@@ -44,113 +46,155 @@ namespace Core.Framework.FGUI
                 IsFullScreen = true,
                 IsFit = true,
                 Layer = UILayer.Normal,
-                CloseOnClickOutside = false
+                CloseOnClickOutside = true
             };
         }
 
-        /// <summary>
-        /// 初始化窗口（必须调用）
-        /// </summary>
-        public void Initialize()
+        public System.Collections.IEnumerator InitializeAsync()
         {
-            if (_initialized) return;
-            // 加载资源包
-            FGUIResourceManager.Instance.AddPackage(Param.packagePath);
+            if (_initialized) yield break;
 
-            var Type = GetType();
+            ResourcesManager.Instance.FGUIResourceManager.AddPackage(Param.packagePath);
 
-            if (GUIManager.Instance._hiddenWindows.ContainsKey(Type))
-                _root = GUIManager.Instance._hiddenWindows[Type]._root;
+            var type = GetType();
+            if (GUIManager.Instance._hiddenWindows.ContainsKey(type))
+                _root = GUIManager.Instance._hiddenWindows[type]._root;
             else
                 _root = UIPackage.CreateObject(Param.packageName, Param.componentName).asCom;
+
             if (_root == null)
             {
                 Debug.LogError($"无法从 [{Param.packageName}] 加载 [{Param.componentName}]");
-                return;
+                yield break;
             }
 
-
-
-            // 全屏处理
             if (Param.IsFullScreen)
             {
                 _root.SetSize(GRoot.inst.width, GRoot.inst.height);
             }
 
-            // 初始化组件
+            // 调用子类的异步初始化逻辑
             OnInit(_root);
-            // 居中显示
             Center();
             _initialized = true;
+            _isDataReady = true; 
         }
 
-        /// <summary>
-        /// 子类实现的初始化方法
-        /// </summary>
-        protected abstract void OnInit(GComponent root);
+        public virtual void InitializeParam(ShowWindowParam param) { }
 
-        /// <summary>
-        /// 销毁窗口
-        /// </summary>
-        public void Dispose()
+        protected abstract void OnInit(GComponent com);
+        public void Destroy()
         {
-            Hide();
-            _root.Dispose();
-            this.Dispose();
+            if (_root == null) return;
+
+            if (_isShown)
+            {
+                Hide();
+            }
+
+            if (!_root.isDisposed)
+            {
+                _root.Dispose();
+            }
+            _root = null;
+
+            GUIManager.Instance.RemoveWindow(this);
+            OnDestroy();
         }
         #endregion
 
         #region 显示控制
-        public void Show()
+        public System.Collections.IEnumerator ShowAsync()
         {
+            if (!_initialized)
+            {
+                yield return CoroutineManager.Instance.StartManagedCoroutine(InitializeAsync());
+            }
 
-            if (!_initialized) Initialize();
+            if (!_isDataReady)
+            {
+                yield return new WaitUntil(() => _isDataReady);
+            }
 
+            BeforeShow();
             var container = GUIManager.Instance.GetLayerContainer(Param.Layer);
             if (container != null)
             {
                 container.AddChild(_root);
                 GUIManager.Instance.AddActiveWindow(this);
                 _isShown = true;
+
+                if (Param.CloseOnClickOutside)
+                {
+                    Stage.inst.onClick.Set(OnModalClickHandler);
+                    _root.onRollOut.Set(() => { _isOutside = true; });
+                    _root.onRollOver.Set(() => { _isOutside = false; });
+                }
             }
 
             if (Param.IsFit) GUIManager.Instance.AutoFitWindow(this);
-
             OnShow();
+        }
+
+        public void Show()
+        {
+            CoroutineManager.Instance.StartManagedCoroutine(ShowAsync());
         }
 
         public void Hide()
         {
-            if (!_isShown) return;
+            if (!_isShown || _root == null) return;
 
+            if (Param.CloseOnClickOutside)
+            {
+                Stage.inst.onClick.Remove(OnModalClickHandler);
+                _root.onRollOut.Clear();
+                _root.onRollOver.Clear();
+            }
 
+            Debug.Log($"隐藏 {GetType().Name}");
             _root.RemoveFromParent();
             GUIManager.Instance.MoveToHiddenWindows(this);
             _isShown = false;
+            _initialized = false;
+            _isDataReady = false;
             OnHide();
         }
         #endregion
 
         #region 内部方法
-
         public void Center()
         {
-            _root.SetXY((GRoot.inst.width - _root.scaleX * _root.sourceWidth) / 2,
-                (GRoot.inst.height - _root.scaleY * _root.sourceHeight) / 2);//不知道SetScale这玩意到底是在哪个生命周期里的，怎么半天不变的（恼）
+            if (_root != null && !_root.isDisposed)
+            {
+                _root.SetXY((GRoot.inst.width - _root.scaleX * _root.sourceWidth) / 2,
+                            (GRoot.inst.height - _root.scaleY * _root.sourceHeight) / 2);
+            }
         }
 
-        private void OnModalClick()
+        private void OnModalClickHandler()
         {
-            if (Param.CloseOnClickOutside)
+
+            if (Param.CloseOnClickOutside && _root != null && !_root.isDisposed)
             {
-                Hide();
+                if (_isOutside)
+                {
+                    Hide();
+                }
             }
         }
         #endregion
 
         #region 可重写方法
+        protected virtual void BeforeShow() { }
         protected virtual void OnShow() { }
         protected virtual void OnHide() { }
+        protected virtual void OnDestroy() { }
         #endregion
+
+        public abstract class ShowWindowParam
+        {
+            public ShowWindowParam() { }
+        }
     }
 }

@@ -2,19 +2,18 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using FairyGUI;
+using Core.Framework.Network;
+using Core.Framework.Event;
 
 public class TestClass : MonoBehaviour
 {
+    ChatViewModel chatViewModel;
     // Start is called before the first frame update
     void Start()
     {
-        Window window = new Window();
-        UIPackage.AddPackage("UI/Chat");
-        var pack = UIPackage.GetByName("UI/Chat");
-        var panel = UIPackage.CreateObject("Chat", "MenuWindow");
-        if (panel != null)
-            window.contentPane = panel as GComponent;
-        window.Show();
+        chatViewModel = new ChatViewModel();
+        string msg = "麻烦帮我看看2025年1月和开会有关的记录呗";
+        EventManager.Instance.Trigger<string, string>(ClientEvent.ON_SEND_FUNC_REQUEST, msg, "generateCrudQuery");
     }
 
     // Update is called once per frame

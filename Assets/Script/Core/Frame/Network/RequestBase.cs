@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Newtonsoft.Json;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -23,10 +24,11 @@ namespace Core.Framework.Network
         // 生成 UnityWebRequest
         public UnityWebRequest CreateWebRequest()
         {
-            Debug.Log(JsonUtility.ToJson(RequestBody));
+            Debug.Log(JsonConvert.SerializeObject(RequestBody));
+            var json = JsonConvert.SerializeObject(RequestBody);
             var request = new UnityWebRequest(Config.URL, Config.Method.ToString())
             {
-                uploadHandler = new UploadHandlerRaw(System.Text.Encoding.UTF8.GetBytes(JsonUtility.ToJson(RequestBody))),
+                uploadHandler = new UploadHandlerRaw(System.Text.Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(RequestBody))),
                 downloadHandler = new DownloadHandlerBuffer()
             };
 
