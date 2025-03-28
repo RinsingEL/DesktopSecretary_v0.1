@@ -31,16 +31,14 @@ namespace Com.Module.Schedule
                     description = m_taskDesTxt.text,
                     date = this.date,
                     index = index,
+                    DueTime = tasks[index].DueDate.HasValue?  tasks[index].DueDate.Value : DateTime.Now,
+                    StartAt = tasks[index].StartedAt,
                     viewModel = this.viewModel
                 };
                 GUIManager.Instance.ShowWindow(param);
             });
         }
 
-        private void EditTask(EventContext context)
-        {
-
-        }
         private void AddTask()
         {
             var param = new EditWindow.EditWindowParam()

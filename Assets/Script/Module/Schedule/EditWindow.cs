@@ -23,8 +23,7 @@ namespace Com.Module.Schedule
         {
             rootWindow = com as UI_EditWindow;
             rootWindow.Init(param);
-            rootWindow.m_cancelBtn.onClick.Add(Destroy);//感觉也能做成绑个事件让他修改事件后Hide
-            rootWindow.m_saveBtn.onClick.Add(Destroy);
+            rootWindow.m_closeBtn.onClick.Set(Destroy);
         }
         public override void InitializeParam(ShowWindowParam param)
         {
@@ -33,8 +32,7 @@ namespace Com.Module.Schedule
         protected override void OnDestroy()
         {
             base.OnDestroy();
-            rootWindow.m_cancelBtn.onClick.Remove(Destroy);
-            rootWindow.m_saveBtn.onClick.Remove(Destroy);
+            rootWindow.m_closeBtn.onClick.Remove(Destroy);
         }
         public class EditWindowParam : ShowWindowParam
         {
@@ -42,9 +40,12 @@ namespace Com.Module.Schedule
             public string description;
             public int index;
             public DateTime date;
+            public DateTime DueTime;
+            public DateTime StartAt;
             public bool IsAdd = false;
             public CalendarViewModel viewModel;
         }
+
     }
 }
 

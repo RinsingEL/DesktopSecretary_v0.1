@@ -7,6 +7,7 @@ namespace Com.Module.Schedule
 {
     public partial class UI_EditWindow : GComponent
     {
+        public Controller m_IsAdd;
         public GTextField m_titleTxt;
         public GTextInput m_titleInput;
         public GTextField m_desTxt;
@@ -15,6 +16,7 @@ namespace Com.Module.Schedule
         public GButton m_cancelBtn;
         public GComponent m_startinput;
         public GComponent m_endInput;
+        public GButton m_closeBtn;
         public const string URL = "ui://msqew0pqgbhr7";
 
         public static UI_EditWindow CreateInstance()
@@ -26,6 +28,7 @@ namespace Com.Module.Schedule
         {
             base.ConstructFromXML(xml);
 
+            m_IsAdd = GetController("IsAdd");
             m_titleTxt = (GTextField)GetChild("titleTxt");
             m_titleInput = (GTextInput)GetChild("titleInput");
             m_desTxt = (GTextField)GetChild("desTxt");
@@ -34,6 +37,7 @@ namespace Com.Module.Schedule
             m_cancelBtn = (GButton)GetChild("cancelBtn");
             m_startinput = (GComponent)GetChild("startinput");
             m_endInput = (GComponent)GetChild("endInput");
+            m_closeBtn = (GButton)GetChild("closeBtn");
         }
     }
 }

@@ -42,6 +42,8 @@ namespace Com.Module.Schedule
                 date = _selectDate,
                 index = 0,
                 IsAdd = true,
+                DueTime = DateTime.Now,
+                StartAt = DateTime.Now,
                 viewModel = _viewModel
             };
             GUIManager.Instance.ShowWindow(param);

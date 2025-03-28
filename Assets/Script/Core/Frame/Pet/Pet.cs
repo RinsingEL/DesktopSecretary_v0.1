@@ -11,6 +11,8 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices.ComTypes;
 using UnityEngine;
 
+namespace Core.Frame.Pet
+{
 public class Pet : MonoBehaviour
 {
     // 射线检测标签枚举
@@ -33,11 +35,15 @@ public class Pet : MonoBehaviour
     private CubismModel cubismModel;
     private bool isActive = false; // 是否正在交互
     public static Pet Instance;
+    private PetAttributes attributes;  // 添加属性组件引用
+
     private void Start()
     {
         cubismModel = GetComponent<CubismModel>();
         rayCaster = GetComponent<CubismRaycaster>();
         animator = GetComponent<Animator>();
+        attributes = GetComponent<PetAttributes>();  // 获取属性组件
+        
         if (Instance == null)
             Instance = this;
         if (cubismModel == null)
@@ -49,6 +55,11 @@ public class Pet : MonoBehaviour
         {
             rayCaster = gameObject.AddComponent<CubismRaycaster>();
             Debug.LogWarning("自动添加CubismRaycaster");
+        }
+        if (attributes == null)
+        {
+            attributes = gameObject.AddComponent<PetAttributes>();
+            Debug.LogWarning("自动添加PetAttributes");
         }
         //自动填充
         if (rayAbles.Count == 0)
@@ -127,4 +138,5 @@ public class Pet : MonoBehaviour
     {
         EventManager.Instance.RemoveEvent<string>(ClientEvent.ON_PET_EMOTION_CHANGE, SetEmotionState);
     }
+}
 }

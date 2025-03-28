@@ -14,7 +14,6 @@ namespace Com.Module.Schedule
             _calendarData = new CalendarData();
             _calendarData.Load();
         }
-
         public List<DBClass.Task> GetTasksForDay(DateTime date)
         {
             string key = date.ToShortDateString();
@@ -25,7 +24,7 @@ namespace Com.Module.Schedule
             return new List<DBClass.Task>();
         }
 
-        public void ModifyTask(DateTime date, int index, string title, string description)
+        public void ModifyTask(DateTime date, int index, string title, string description, DateTime startDate, DateTime dueTime, int priority = 2, int status = 0)
         {
             string key = date.ToShortDateString();
             if (_calendarData.tasksByDay.ContainsKey(key) && index < _calendarData.tasksByDay[key].Count)
@@ -33,6 +32,10 @@ namespace Com.Module.Schedule
                 var task = _calendarData.tasksByDay[key][index];
                 task.Title = title;
                 task.Description = description;
+                task.DueDate = dueTime;
+                task.StartedAt = startDate;
+                task.Priority = priority;
+                task.Status = status;
                 task.UpdatedAt = DateTime.Now;
                 _calendarData.Save();
                 EventManager.Instance.Trigger(ClientEvent.UPDATE_CALENDAR_VIEW);

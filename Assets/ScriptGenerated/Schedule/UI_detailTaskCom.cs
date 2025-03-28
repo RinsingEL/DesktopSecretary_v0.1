@@ -10,6 +10,7 @@ namespace Com.Module.Schedule
         public GButton m_taskBtn;
         public GTextField m_titleTxt;
         public GTextField m_taskDesTxt;
+        public GTextField m_dateTxt;
         public const string URL = "ui://msqew0pqdipb6";
 
         public static UI_detailTaskCom CreateInstance()
@@ -24,6 +25,7 @@ namespace Com.Module.Schedule
             m_taskBtn = (GButton)GetChild("taskBtn");
             m_titleTxt = (GTextField)GetChild("titleTxt");
             m_taskDesTxt = (GTextField)GetChild("taskDesTxt");
+            m_dateTxt = (GTextField)GetChild("dateTxt");
         }
     }
 }
