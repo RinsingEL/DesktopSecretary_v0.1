@@ -24,9 +24,13 @@ namespace Core.Framework.Resource
             public DateTime StartedAt { get; set; }       // 任务开始时间
             public DateTime UpdatedAt { get; set; }       // 任务最后更新时间
 
-           
-
-            
+            public Task()
+            {
+                Priority = 2;  // 默认优先级
+                Status = 0;    // 默认状态
+                StartedAt = DateTime.Now;
+                UpdatedAt = DateTime.Now;
+            }
         }
     }
 }

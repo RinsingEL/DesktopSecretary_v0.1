@@ -3,6 +3,7 @@ using FairyGUI;
 using Com.Module.CommonResources;
 using static Com.Module.Schedule.EditWindow;
 using System;
+using Com.Module.Watcher;
 
 namespace Com.Module.Schedule
 {
@@ -62,9 +63,17 @@ namespace Com.Module.Schedule
             ((UI_InputAndSelectCom)m_endInput).m_selectList.numItems = 48;
         }
 
+
         private void StartFocus()
         {
-            
+            var watcherParam = new WatcherWindow.WatcherWindowParam
+            {
+                title = _param.title,
+                description = _param.description,
+                startTime = _param.StartAt,
+                endTime = _param.DueTime,
+            };
+            GUIManager.Instance.ShowWindow(watcherParam);
         }
 
         private void EnterEdit()

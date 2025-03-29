@@ -8,7 +8,10 @@ using Core.Framework.Network.ChatSystem;
 using Core.Framework.Plugin;
 using Core.Framework.Resource;
 using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
+using Unity.VisualScripting;
 using UnityEngine;
 
 namespace Module.chat
@@ -49,11 +52,29 @@ namespace Module.chat
                         {
                             var arr = JsonUtility.FromJson<ChatResposeClass.ChatResponse.SelectFunctionArgu>(choice.message.function_call.arguments);
                             OnGPTSelectResponse(arr);
+                            if(arr.reply != string.Empty)
+                            {
+                                DialoguePanel.DialogueParam param = new DialoguePanel.DialogueParam();
+                                param.dialogue = arr.reply;
+                                GUIManager.Instance.ShowWindow(param);
+                                // 添加到聊天记录并保存
+                                chatData.Add(choice.message.role, arr.reply);
+                                chatData.SaveToLocal();
+                            }
                         }
                         else if (choice.message.function_call.name == "generateCrudQuery")
                         {
                             var arr = JsonUtility.FromJson<ChatResposeClass.ChatResponse.CrudFunctionArgu>(choice.message.function_call.arguments);
                             OnSelectSQLGen(arr.generatedQuery, arr.undoQuery);
+                            if (arr.reply != string.Empty)
+                            {
+                                DialoguePanel.DialogueParam param = new DialoguePanel.DialogueParam();
+                                param.dialogue = arr.reply;
+                                GUIManager.Instance.ShowWindow(param);
+                                // 添加到聊天记录并保存
+                                chatData.Add(choice.message.role, arr.reply);
+                                chatData.SaveToLocal();
+                            }
                         }
                         else if(choice.message.function_call.name == "generateReplyWithEmotion")
                         {
@@ -87,29 +108,67 @@ namespace Module.chat
 
         private void OnSelectSQLGen(string sql, string undo)
         {
+            // 检查SQL语句中是否包含不完整的时间格式
+            if (Regex.IsMatch(sql, @"\d{4}/\d{2}/\d{2}(?![\s\S]*\d{2}:\d{2}:\d{2})"))
+            {
+                // 如果发现不完整的时间格式，添加默认时间
+                sql = Regex.Replace(sql, @"(\d{4}/\d{2}/\d{2})", "$1 00:00:00");
+                Debug.Log("检测到不完整时间格式，已自动补全：" + sql);
+            }
+            // 如果是 INSERT 语句且不包含 TaskID，就自动生成 UUID
+            if (sql.Trim().StartsWith("INSERT INTO Tasks", StringComparison.OrdinalIgnoreCase) &&
+                !sql.Contains("TaskID", StringComparison.OrdinalIgnoreCase))
+            {
+                string uuid = Guid.NewGuid().ToString();
+                sql = sql.Replace("INSERT INTO Tasks (", "INSERT INTO Tasks (TaskID, ");
+                sql = sql.Replace(") VALUES (", $") VALUES ('{uuid}', ");
+            }
             ResourcesManager.Instance.DBSourceManager.ExecuteSql(sql,undo);
         }
+        private bool isProcessingQuery = false;
+
         private void OnGPTSelectResponse(ChatResposeClass.ChatResponse.SelectFunctionArgu arr)
         {
-            string sql = arr.generatedSelect; // 假设 SelectFunctionArgu 中有 generatedSelect 字段
+            if (isProcessingQuery) return;
+            isProcessingQuery = true;
 
-            // 执行 SQL 查询
+            // 1. 检查 SQL 是否合法
+            if (string.IsNullOrEmpty(arr.generatedSelect))
+            {
+                OnSendFunctionRequest("生成的SQL语句为空。", arr.intent);
+                isProcessingQuery = false;
+                return;
+            }
+
+            if (!arr.generatedSelect.Trim().StartsWith("SELECT", StringComparison.OrdinalIgnoreCase))
+            {
+                OnSendFunctionRequest("生成的SQL不是查询语句。", arr.intent);
+                isProcessingQuery = false;
+                return;
+            }
+
+            // 2. 处理时间格式
+            string sql = arr.generatedSelect;
+            if (Regex.IsMatch(sql, @"\d{4}/\d{2}/\d{2}(?![\s\S]*\d{2}:\d{2}:\d{2})"))
+            {
+                sql = Regex.Replace(sql, @"(\d{4}/\d{2}/\d{2})", "$1 00:00:00");
+            }
+
+            // 3. 执行查询
             ResourcesManager.Instance.DBSourceManager.ExecuteSqlQuery(sql, (results) =>
             {
+                isProcessingQuery = false;
                 if (results != null && results.Count > 0)
                 {
-                    // 处理查询结果
-                    string resultJson = JsonConvert.SerializeObject(results); // 将结果转为 JSON 字符串
-                    Debug.Log("SQL res: " + resultJson);
-                    OnSendFunctionRequest($"用户此前的要求是\"{arr.intent}\"，下面是JSON格式的查询结果：{resultJson}");
+                    string resultJson = JsonConvert.SerializeObject(results);
+                    OnSendChatMessage($"查询结果：{resultJson}", arr.intent);
                 }
                 else
                 {
-                    Debug.LogWarning("没有结果.");
+                    OnSendChatMessage($"没有找到符合条件的数据。", arr.intent);
                 }
             });
         }
-
         protected override void OnUninstall()
         {
             EventManager.Instance.RemoveEvent<string, string>(ClientEvent.ON_SEND_CHAT_REQUEST, OnSendChatMessage);
@@ -135,7 +194,7 @@ namespace Module.chat
             var body = new ChatRequestClass.ChatReuestBody();
             body.model = ConfigManager.Instance.Network.Model;
             body.messages = new();
-            body.messages.Add(new ChatRequestClass.ChatReuestBody.Message() { role = "system", content = prompt });
+            body.messages.Add(new ChatRequestClass.ChatReuestBody.Message() { role = "system", content = prompt + "现在的时间是" + DateTime.Now.ToString()});
             body.messages.Add(new ChatRequestClass.ChatReuestBody.Message() { role = "user", content = msg });
             body.safe_mode = false;
 
@@ -151,7 +210,7 @@ namespace Module.chat
             var body = new ChatRequestClass.ChatReuestBody();
             body.model = ConfigManager.Instance.Network.Model;
             body.messages = new();
-            body.messages.Add(new ChatRequestClass.ChatReuestBody.Message() { role = "system", content = prompt });
+            body.messages.Add(new ChatRequestClass.ChatReuestBody.Message() { role = "system", content = prompt + "现在的时间是" + DateTime.Now.ToString() });
             if (msg != null)
             {
                 body.messages.Add(new ChatRequestClass.ChatReuestBody.Message() { role = "user", content = msg });

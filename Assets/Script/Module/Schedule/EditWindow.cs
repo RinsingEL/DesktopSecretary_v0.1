@@ -1,4 +1,5 @@
 using Com.Module.Schedule;
+using Com.Module.Watcher;
 using Core.Framework.FGUI;
 using FairyGUI;
 using System;
@@ -18,6 +19,7 @@ namespace Com.Module.Schedule
             Param.packageName = "Schedule";
             Param.componentName = "EditWindow";
             Param.Layer = UILayer.Popup;
+            Param.CloseOnClickOutside = false;
         }
         protected override void OnInit(GComponent com)
         {
@@ -34,6 +36,7 @@ namespace Com.Module.Schedule
             base.OnDestroy();
             rootWindow.m_closeBtn.onClick.Remove(Destroy);
         }
+
         public class EditWindowParam : ShowWindowParam
         {
             public string title;
@@ -45,7 +48,6 @@ namespace Com.Module.Schedule
             public bool IsAdd = false;
             public CalendarViewModel viewModel;
         }
-
     }
 }
 

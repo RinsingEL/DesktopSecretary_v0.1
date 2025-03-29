@@ -13,6 +13,7 @@ namespace Com.Module.Schedule
             Param.packageName = "Schedule";
             Param.componentName = "CalendarWindow";
             Param.Layer = UILayer.Normal;
+            Param.CloseOnClickOutside = false;
         }
         protected override void OnInit(GComponent com)
         {

@@ -11,6 +11,7 @@ namespace Com.Module.Chat
     {
         private string dialogue;
         private Action hide;
+        string coru = "";
         public void Init(DialogueParam param)
         {
             dialogue = param.dialogue;
@@ -18,7 +19,10 @@ namespace Com.Module.Chat
         }
         public void UpdateView()
         {
-            CoroutineManager.Instance.StartManagedCoroutine(UpdateStrByStep());
+            if (coru != string.Empty)
+                CoroutineManager.Instance.StopManagedCoroutine(coru);
+           coru =  CoroutineManager.Instance.StartManagedCoroutine(UpdateStrByStep());
+
         }
         public IEnumerator UpdateStrByStep()
         {
@@ -38,7 +42,7 @@ namespace Com.Module.Chat
                 yield return new WaitForSeconds(charDelay);
             }
 
-            yield return new WaitForSeconds(5f);
+            yield return new WaitForSeconds(0.5f * dialogue.Length);
             hide();
         }
     }

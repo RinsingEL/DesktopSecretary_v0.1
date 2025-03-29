@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using FairyGUI;
 using UnityEngine;
+using static UnityEditor.PlayerSettings;
+using static UnityEngine.GraphicsBuffer;
 
 namespace Core.Framework.FGUI
 {
@@ -74,9 +76,9 @@ namespace Core.Framework.FGUI
             // 优先从隐藏列表恢复
             if (_hiddenWindows.TryGetValue(type, out var hiddenWindow))
             {
-                _hiddenWindows.Remove(type);
                 _activeWindows[type] = hiddenWindow;
                 hiddenWindow.Show();
+                _hiddenWindows.Remove(type);
                 return;
             }
 
@@ -102,6 +104,7 @@ namespace Core.Framework.FGUI
 
         public void ShowWindow(GUIWindow.ShowWindowParam showWindowParam)
         {
+
             if (showWindowParam == null)
             {
                 Debug.LogError("参数是空的");
@@ -120,6 +123,7 @@ namespace Core.Framework.FGUI
             {
                 _hiddenWindows.Remove(windowType);
                 _activeWindows[windowType] = hiddenWindow;
+                hiddenWindow.InitializeParam(showWindowParam);
                 hiddenWindow.Show();
                 return;
             }
@@ -129,6 +133,7 @@ namespace Core.Framework.FGUI
             {
                 if (_activeWindows.ContainsKey(windowType))
                 {
+                    _activeWindows[windowType].InitializeParam(showWindowParam);//更新参数
                     Debug.LogWarning($"窗口 [{windowType.Name}] 已经处于显示状态");
                     return;
                 }
@@ -276,6 +281,11 @@ namespace Core.Framework.FGUI
 
             // 设置窗口位置
             window._root.SetPosition(uiPos.x, uiPos.y , 0);//不需要Z轴目前
+        }
+        public void SetWindowPosition(GUIWindow window, Vector2 Pos)
+        {
+            Vector2 uiPos = GRoot.inst.GlobalToLocal(Pos);
+            window._root.SetPosition(uiPos.x, uiPos.y, window._root.z);//不需要Z轴目前
         }
         #endregion
     }

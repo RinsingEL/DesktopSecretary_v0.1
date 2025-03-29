@@ -45,7 +45,7 @@ namespace Core.Framework.Network.ChatSystem
         {
             public string type = "object";
             public PropertiesSelect properties = new PropertiesSelect();
-            public string[] required = new string[] { "intent", "generatedSelect" };
+            public string[] required = new string[] {"reply", "intent", "generatedSelect" };
             public bool additionalProperties = false;
             public bool strict = true; // 移到 parameters 内部
         }
@@ -53,8 +53,15 @@ namespace Core.Framework.Network.ChatSystem
         [Serializable]
         public class PropertiesSelect
         {
+            public Reply reply = new Reply();
             public Intent intent = new Intent();
             public GeneratedSelect generatedSelect = new GeneratedSelect();
+        }
+        [Serializable]
+        public class Reply
+        {
+            public string type = "string";
+            public string description = "the reply in Chinese";
         }
 
         [Serializable]
@@ -92,7 +99,7 @@ namespace Core.Framework.Network.ChatSystem
             {
                 public string type = "object";
                 public PropertiesCrud properties = new PropertiesCrud();
-                public string[] required = new string[] { "intent", "generatedQuery", "undoQuery" };
+                public string[] required = new string[] { "reply" , "intent", "generatedQuery", "undoQuery" };
                 public bool additionalProperties = false;
                 public bool strict = true;
             }
@@ -100,11 +107,17 @@ namespace Core.Framework.Network.ChatSystem
             [Serializable]
             public class PropertiesCrud
             {
+                public Reply reply = new Reply();
                 public Intent intent = new Intent();
                 public GeneratedQuery generatedQuery = new GeneratedQuery();
                 public UndoQuery undoQuery = new UndoQuery();
             }
-
+            [Serializable]
+            public class Reply
+            {
+                public string type = "string";
+                public string description = "the reply in Chinese .e.g.,‘好的，我帮你处理了’";
+            }
             [Serializable]
             public class CrudIntent
             {
@@ -204,6 +217,7 @@ namespace Core.Framework.Network.ChatSystem
             [Serializable]
             public class SelectFunctionArgu
             {
+                public string reply;
                 public string intent;
                 public string generatedSelect;
             }
@@ -217,6 +231,7 @@ namespace Core.Framework.Network.ChatSystem
             [Serializable]
             public class CrudFunctionArgu
             {
+                public string reply;
                 public string crudIntent;
                 public string generatedQuery;
                 public string undoQuery;

@@ -3,6 +3,7 @@ using Com.Module.Chat;
 using Com.Module.CommonResources;
 using Com.Module.MainUI;
 using Com.Module.Schedule;
+using Com.Module.Watcher;
 using Core.Frame.Pet;
 using Core.Framework.Config;
 using Core.Framework.Event;
@@ -114,6 +115,7 @@ public class StartGame : MonoBehaviour
         CommonResourcesBinder.BindAll();
         MainUIBinder.BindAll();
         ScheduleBinder.BindAll();
+        WatcherBinder.BindAll();
     }
     //linww后面换成通用的
     private void SpawnMiku()

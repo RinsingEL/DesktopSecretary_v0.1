@@ -7,6 +7,7 @@ namespace Com.Module.Chat
 {
     public partial class UI_DialoguePanel : GComponent
     {
+        public GGraph m_bg;
         public GTextField m_dialogueTxt;
         public const string URL = "ui://4kme1nf9k8kad";
 
@@ -19,6 +20,7 @@ namespace Com.Module.Chat
         {
             base.ConstructFromXML(xml);
 
+            m_bg = (GGraph)GetChild("bg");
             m_dialogueTxt = (GTextField)GetChild("dialogueTxt");
         }
     }
