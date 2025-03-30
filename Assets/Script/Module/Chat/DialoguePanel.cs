@@ -42,8 +42,11 @@ namespace Com.Module.Chat
         }
         protected override void BeforeShow()
         {
-            rootwindow.Init(param);
-            rootwindow.UpdateView();
+            if (rootwindow != null && param != null)
+            {
+                rootwindow.Init(param);
+                rootwindow.UpdateView();
+            }
         }
         public class DialogueParam : ShowWindowParam
         {

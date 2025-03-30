@@ -21,6 +21,7 @@ namespace Com.Module.Schedule
         public GList m_taskList;
         public GButton m_detailCollapseBtn;
         public GButton m_addBtn;
+        public GImage m_schedule;
         public GGroup m_left;
         public const string URL = "ui://msqew0pqsiyd0";
 
@@ -47,6 +48,7 @@ namespace Com.Module.Schedule
             m_taskList = (GList)GetChild("taskList");
             m_detailCollapseBtn = (GButton)GetChild("detailCollapseBtn");
             m_addBtn = (GButton)GetChild("addBtn");
+            m_schedule = (GImage)GetChild("schedule");
             m_left = (GGroup)GetChild("left");
         }
     }

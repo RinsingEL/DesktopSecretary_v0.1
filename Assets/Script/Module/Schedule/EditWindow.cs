@@ -24,6 +24,7 @@ namespace Com.Module.Schedule
         protected override void OnInit(GComponent com)
         {
             rootWindow = com as UI_EditWindow;
+            param.Destroy = Destroy;
             rootWindow.Init(param);
             rootWindow.m_closeBtn.onClick.Set(Destroy);
         }
@@ -35,6 +36,7 @@ namespace Com.Module.Schedule
         {
             base.OnDestroy();
             rootWindow.m_closeBtn.onClick.Remove(Destroy);
+            
         }
 
         public class EditWindowParam : ShowWindowParam
@@ -47,6 +49,7 @@ namespace Com.Module.Schedule
             public DateTime StartAt;
             public bool IsAdd = false;
             public CalendarViewModel viewModel;
+            public Action Destroy;
         }
     }
 }

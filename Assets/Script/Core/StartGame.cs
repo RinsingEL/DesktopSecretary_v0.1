@@ -31,6 +31,7 @@ public class StartGame : MonoBehaviour
 
         // 初始化模块插件
         Install<ChatPlugin>();
+        Install<RemindPlugin>();
         InitializeManagers();
         ApplyConfigurations();
         PreloadEssentialResources();

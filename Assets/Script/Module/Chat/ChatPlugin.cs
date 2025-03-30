@@ -123,7 +123,7 @@ namespace Module.chat
                 sql = sql.Replace("INSERT INTO Tasks (", "INSERT INTO Tasks (TaskID, ");
                 sql = sql.Replace(") VALUES (", $") VALUES ('{uuid}', ");
             }
-            ResourcesManager.Instance.DBSourceManager.ExecuteSql(sql,undo);
+            ResourcesManager.Instance.DBSourceManager.ExecuteSql(sql, undo, (bool symbol) => { EventManager.Instance.Trigger(ClientEvent.UPDATE_CALENDAR_INFO); });
         }
         private bool isProcessingQuery = false;
 

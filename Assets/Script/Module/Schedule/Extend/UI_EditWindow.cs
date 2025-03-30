@@ -42,11 +42,14 @@ namespace Com.Module.Schedule
             });
             ((UI_InputAndSelectCom)m_startinput).m_selectList.itemRenderer = RenderInputTimeList;
             ((UI_InputAndSelectCom)m_endInput).m_selectList.itemRenderer = RenderEndTimeList;
+            
+            
             if (param.IsAdd)
             {
                 m_IsAdd.selectedIndex = 1;
                 m_saveBtn.title = "Ìí¼Ó";
                 m_saveBtn.onClick.Add(AddTask);
+                m_deleteBtn.visible = false;
             }
             else
             {
@@ -57,13 +60,23 @@ namespace Com.Module.Schedule
                 m_cancelBtn.onClick.Set(EnterEdit);
                 m_startinput.touchable = false;
                 m_endInput.touchable = false;
+                m_deleteBtn.visible = true;
+                m_deleteBtn.onClick.Set(DeleteTask);
             }
 
             ((UI_InputAndSelectCom)m_startinput).m_selectList.numItems = 48;
             ((UI_InputAndSelectCom)m_endInput).m_selectList.numItems = 48;
         }
 
-
+        private void DeleteTask()
+        {
+            var tasks = _param.viewModel.GetTasksForDay(_param.date);
+            if (_param.index >= 0 && _param.index < tasks.Count)
+            {
+                _param.viewModel.DeleteTask(_param.date, _param.index);
+                _param.Destroy();
+            }
+        }
         private void StartFocus()
         {
             var watcherParam = new WatcherWindow.WatcherWindowParam
@@ -143,6 +156,7 @@ namespace Com.Module.Schedule
             var StartAt = _param.date.Add(StartSpan);
             var DueTime = _param.date.Add(EndSpan);
             _param.viewModel.AddNewTask(_param.date, _param.title, _param.description, StartAt, DueTime);
+            _param.Destroy();
         }
     }
 }

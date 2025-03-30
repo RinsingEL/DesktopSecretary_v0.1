@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Core.Framework.Event;
 using Core.Framework.Resource;
+using UnityEngine;
 
 namespace Com.Module.Schedule
 {
@@ -13,6 +14,28 @@ namespace Com.Module.Schedule
         {
             _calendarData = new CalendarData();
             _calendarData.Load();
+            EventManager.Instance.AddEvent(ClientEvent.UPDATE_CALENDAR_INFO, OnUpdateInfo);
+            Application.quitting += OnApplicationQuit;
+        }
+
+        private void OnApplicationQuit()
+        {
+            Cleanup();
+        }
+
+        private void OnUpdateInfo()
+        {
+            _calendarData.Load();
+        }
+
+        private static CalendarViewModel instance;
+        public static CalendarViewModel Instance
+        {
+            get {
+                if (instance == null)
+                    instance = new CalendarViewModel();
+                return instance;
+            }
         }
         public List<DBClass.Task> GetTasksForDay(DateTime date)
         {
@@ -68,6 +91,36 @@ namespace Com.Module.Schedule
 
             _calendarData.Save();
             EventManager.Instance.Trigger(ClientEvent.UPDATE_CALENDAR_VIEW);
+        }
+
+        public List<DBClass.Task> GetAllTasks()
+        {
+            return _calendarData.tasks;
+        }
+
+        public void UpdateTask(DBClass.Task task)
+        {
+            task.UpdatedAt = DateTime.Now;
+            _calendarData.Save();
+            EventManager.Instance.Trigger(ClientEvent.UPDATE_CALENDAR_VIEW);
+        }
+        public void DeleteTask(DateTime date, int index)
+        {
+            string key = date.ToShortDateString();
+            if (_calendarData.tasksByDay.ContainsKey(key) && index < _calendarData.tasksByDay[key].Count)
+            {
+                var task = _calendarData.tasksByDay[key][index];
+                _calendarData.tasks.Remove(task);
+                _calendarData.tasksByDay[key].RemoveAt(index);
+                _calendarData.Save();
+                EventManager.Instance.Trigger(ClientEvent.UPDATE_CALENDAR_VIEW);
+            }
+        }
+
+        public void Cleanup()
+        {
+            EventManager.Instance.RemoveEvent(ClientEvent.UPDATE_CALENDAR_INFO, OnUpdateInfo);
+            Application.quitting -= OnApplicationQuit;
         }
     }
 }

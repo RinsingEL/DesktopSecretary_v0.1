@@ -17,6 +17,7 @@ namespace Com.Module.Schedule
         public GComponent m_startinput;
         public GComponent m_endInput;
         public GButton m_closeBtn;
+        public GButton m_deleteBtn;
         public const string URL = "ui://msqew0pqgbhr7";
 
         public static UI_EditWindow CreateInstance()
@@ -38,6 +39,7 @@ namespace Com.Module.Schedule
             m_startinput = (GComponent)GetChild("startinput");
             m_endInput = (GComponent)GetChild("endInput");
             m_closeBtn = (GButton)GetChild("closeBtn");
+            m_deleteBtn = (GButton)GetChild("deleteBtn");
         }
     }
 }

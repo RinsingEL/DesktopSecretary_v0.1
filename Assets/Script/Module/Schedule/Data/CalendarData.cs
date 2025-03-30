@@ -52,14 +52,15 @@ namespace Com.Module.Schedule
         }
 
         public void Load()
-        {
+        {            
             ResourcesManager.Instance.DBSourceManager.LoadDBAsync<DBClass.Task>("Tasks", GetEventRow, OnDataLoaded);
         }
 
         private void OnDataLoaded()
         {
+            // 强制类型转换
             var cachedData = ResourcesManager.Instance.DBSourceManager.GetCachedTableData("Tasks");
-            tasks = cachedData.Cast<DBClass.Task>().ToList();
+            tasks = cachedData.Select(t => (DBClass.Task)t).ToList(); // 明确类型转换
             CoroutineManager.Instance.StartManagedCoroutine(BuildTaskCacheRoutine());
         }
 
@@ -81,12 +82,12 @@ namespace Com.Module.Schedule
 
         public void Save()
         {
-            // 同步到 _cachedTables
             ResourcesManager.Instance.DBSourceManager.GetCachedTableData("Tasks").Clear();
             ResourcesManager.Instance.DBSourceManager.GetCachedTableData("Tasks").AddRange(tasks.Cast<DBClass.tableBase>());
-
-            // 保存到数据库
-            ResourcesManager.Instance.DBSourceManager.SaveDBAsync<DBClass.Task>("Tasks", SaveEventRow, OnSaveComplete);
+            
+            CoroutineManager.Instance.StartManagedCoroutine(BuildTaskCacheRoutine());
+            //需要清空原来的数据库，因为要实现删除日程
+            ResourcesManager.Instance.DBSourceManager.SaveDBAsync<DBClass.Task>("Tasks", SaveEventRow ,null , true);
         }
 
         private void OnSaveComplete()

@@ -32,6 +32,20 @@ namespace Core.Framework.Resource
                 UpdatedAt = DateTime.Now;
             }
         }
+
+        public class TaskEvaluation : tableBase
+        {
+            public string EvaluationID { get; set; }     // 评估唯一标识
+            public string Tasked { get; set; }           // 关联的任务ID
+            public string EvaluationContent { get; set; }// 评估内容
+            public int Duration { get; set; }            // 任务持续时间（秒）
+            public DateTime EvaluationTime { get; set; } // 评估时间
+
+            public TaskEvaluation()
+            {
+                EvaluationTime = DateTime.Now;
+            }
+        }
     }
 }
 

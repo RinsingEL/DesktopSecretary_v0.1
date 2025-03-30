@@ -21,6 +21,7 @@ namespace Com.Module.Schedule
         {
             date = day;
             m_titleTxt.text = tasks[index].Title;
+            m_dateTxt.text = tasks[index].StartedAt.ToShortTimeString();
             m_taskDesTxt.text = tasks[index].Description;
             m_taskBtn.touchable = true;
             m_taskBtn.onClick.Set(() =>

@@ -18,7 +18,7 @@ namespace Com.Module.Schedule
         protected override void OnInit(GComponent com)
         {
             rootWindow = com as UI_CalendarWindow;
-            _viewModel = new CalendarViewModel();
+            _viewModel = CalendarViewModel.Instance;
             rootWindow.Init(_viewModel);
             rootWindow.m_closeBtn.onClick.Set(Hide);
         }

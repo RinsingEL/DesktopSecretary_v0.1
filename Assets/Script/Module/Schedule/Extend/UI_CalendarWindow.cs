@@ -4,6 +4,8 @@ using Core.Framework.Event;
 using Core.Framework.FGUI;
 using FairyGUI;
 using UnityEngine;
+using System.Linq;
+using Core.Framework.Resource;
 
 namespace Com.Module.Schedule
 {
@@ -104,6 +106,7 @@ namespace Com.Module.Schedule
                 dayToShow = index - _notCurrent + 1;
                 var date = new DateTime(_currentYear, _currentMonth, dayToShow);
                 var tasks = _viewModel.GetTasksForDay(date);
+
                 dayItem.Update(dayToShow, true, tasks);
                 dayItem.onClick.Set(() => OnClickDayBtn(date));
             }
@@ -114,7 +117,22 @@ namespace Com.Module.Schedule
                 dayItem.onClick.Clear();
             }
         }
+        private float CalculateDailyProgress(List<DBClass.Task> tasks)
+        {
+            if (tasks == null || tasks.Count == 0) return 0;
 
+            int completed = tasks.Count(t => t.Status == 2);
+            return (float)completed / tasks.Count;
+        }
+        private Color GetProgressColor(float progress)
+        {
+            return progress switch
+            {
+                >= 0.8f => Color.green,
+                >= 0.5f => new Color(1f, 0.8f, 0f), // 橙色
+                _ => Color.red
+            };
+        }
         private void OnRenderTaskItem(int index, GObject item)
         {
             var taskItem = item as UI_detailTaskCom;
@@ -138,6 +156,12 @@ namespace Com.Module.Schedule
             m_dateTxt.text = selectDay.Day.ToString();
             var tasks = _viewModel.GetTasksForDay(selectDay);
             m_taskList.numItems = tasks.Count;
+
+            // 更新详情视图进度
+            float progress = CalculateDailyProgress(tasks);
+
+            m_schedule.fillAmount = progress;
+            m_schedule.color = GetProgressColor(progress);
         }
 
         private void ShowNextMonth()

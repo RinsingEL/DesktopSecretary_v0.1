@@ -1,4 +1,5 @@
 using Core.Framework.Config;
+using Core.Framework.Event;
 using Core.Framework.Resource;
 using Core.Framework.Utility;
 using Mono.Data.Sqlite;
