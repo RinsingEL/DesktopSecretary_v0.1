@@ -1,5 +1,5 @@
 using Com.Module.Chat;
-using Core.Frame.Pet;
+using Core.Framework.Pet;
 using Core.Framework.FGUI;
 using FairyGUI;
 using System;

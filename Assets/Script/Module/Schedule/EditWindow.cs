@@ -25,6 +25,7 @@ namespace Com.Module.Schedule
         {
             rootWindow = com as UI_EditWindow;
             param.Destroy = Destroy;
+            param.Hide = Hide;
             rootWindow.Init(param);
             rootWindow.m_closeBtn.onClick.Set(Destroy);
         }
@@ -50,6 +51,7 @@ namespace Com.Module.Schedule
             public bool IsAdd = false;
             public CalendarViewModel viewModel;
             public Action Destroy;
+            public Action Hide;
         }
     }
 }

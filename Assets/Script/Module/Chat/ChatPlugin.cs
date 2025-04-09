@@ -11,16 +11,20 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
-using Unity.VisualScripting;
 using UnityEngine;
+using System.Collections;
+using System.IO;
+using Core.Framework.Utility;
+using Core.Framework.Pet;
 
 namespace Module.chat
 {
     public class ChatPlugin : PluginBase
     {
         private ChatData chatData = new ChatData();
-
         private static ChatPlugin instance;
+        private readonly string audioFilePath = @"E:\PythonProject\AudioOutput\audio.wav";
+
         public static ChatPlugin Instance
         {
             get
@@ -30,6 +34,7 @@ namespace Module.chat
                 return instance;
             }
         }
+
         protected override void OnRegister()
         {
             instance = this;
@@ -37,8 +42,9 @@ namespace Module.chat
 
             EventManager.Instance.AddEvent<string, string>(ClientEvent.ON_SEND_CHAT_REQUEST, OnSendChatMessage);
             EventManager.Instance.AddEvent<string, string, string>(ClientEvent.ON_SEND_FUNC_REQUEST, OnSendFunctionRequest);
-            NetworkManager.Instance.AddEvent<string>(NetworkEvent.ON_GPT_RESPONSE,OnGptResponse);
+            NetworkManager.Instance.AddEvent<string>(NetworkEvent.ON_CHAT_RESPONSE, OnGptResponse);
         }
+
         private void OnGptResponse(string msg)
         {
             var chatResponse = JsonUtility.FromJson<ChatResposeClass.ChatResponse>(msg);
@@ -46,20 +52,17 @@ namespace Module.chat
             {
                 foreach (var choice in chatResponse.choices)
                 {
+                    string replyText = null;
+
                     if (choice.finish_reason == "function_call")
                     {
                         if (choice.message.function_call.name == "generateSelectQuery")
                         {
                             var arr = JsonUtility.FromJson<ChatResposeClass.ChatResponse.SelectFunctionArgu>(choice.message.function_call.arguments);
                             OnGPTSelectResponse(arr);
-                            if(arr.reply != string.Empty)
+                            if (arr.reply != string.Empty)
                             {
-                                DialoguePanel.DialogueParam param = new DialoguePanel.DialogueParam();
-                                param.dialogue = arr.reply;
-                                GUIManager.Instance.ShowWindow(param);
-                                // 添加到聊天记录并保存
-                                chatData.Add(choice.message.role, arr.reply);
-                                chatData.SaveToLocal();
+                                replyText = arr.reply;
                             }
                         }
                         else if (choice.message.function_call.name == "generateCrudQuery")
@@ -68,36 +71,73 @@ namespace Module.chat
                             OnSelectSQLGen(arr.generatedQuery, arr.undoQuery);
                             if (arr.reply != string.Empty)
                             {
-                                DialoguePanel.DialogueParam param = new DialoguePanel.DialogueParam();
-                                param.dialogue = arr.reply;
-                                GUIManager.Instance.ShowWindow(param);
-                                // 添加到聊天记录并保存
-                                chatData.Add(choice.message.role, arr.reply);
-                                chatData.SaveToLocal();
+                                replyText = arr.reply;
                             }
                         }
-                        else if(choice.message.function_call.name == "generateReplyWithEmotion")
+                        else if (choice.message.function_call.name == "generateReplyWithEmotion")
                         {
                             var arr = JsonUtility.FromJson<ChatResposeClass.ChatResponse.EmotionArgu>(choice.message.function_call.arguments);
                             OnEmotionChange(arr.emotion);
-                            DialoguePanel.DialogueParam param = new DialoguePanel.DialogueParam();
-                            param.dialogue = arr.replyContent;
-                            GUIManager.Instance.ShowWindow(param);
-                            // 添加到聊天记录并保存
-                            chatData.Add(choice.message.role, arr.replyContent);
-                            chatData.SaveToLocal();
+                            replyText = arr.replyContent;
                         }
                     }
-                    else if (choice.finish_reason == "stop")//防止他不自动调用漏消息
+                    else if (choice.finish_reason == "stop")
                     {
-                        // 添加到聊天记录并保存
-                        chatData.Add(choice.message.role, choice.message.content);
+                        replyText = choice.message.content;
+                    }
+
+                    if (!string.IsNullOrEmpty(replyText))
+                    {
                         DialoguePanel.DialogueParam param = new DialoguePanel.DialogueParam();
-                        param.dialogue = choice.message.content;
+                        param.dialogue = replyText;
                         GUIManager.Instance.ShowWindow(param);
+
+                        chatData.Add(choice.message.role, replyText);
                         chatData.SaveToLocal();
+
+                        // 使用协程合成并播放语音
+                        CoroutineManager.Instance.StartManagedCoroutine(SynthesizeAndPlayAudio(replyText));
                     }
                 }
+            }
+        }
+
+        /// <summary>
+        /// 协程：合成并播放语音，播放后删除文件
+        /// </summary>
+        private IEnumerator SynthesizeAndPlayAudio(string text)
+        {
+            SynthesizerController synthesizer = GameObject.FindObjectOfType<SynthesizerController>();
+            if (synthesizer == null)
+            {
+                Debug.LogError("SynthesizerController 未找到，请确保场景中存在该组件");
+                yield break;
+            }
+
+            synthesizer.Synthesize(text);
+            int overTime = 0;
+
+            while (!File.Exists(audioFilePath) && overTime < 1000)
+            {
+                overTime++;
+                yield return new WaitForSeconds(0.1f);
+            }
+            overTime = 0;
+            // 播放音频
+            SpeechManager.Instance.PlayDynamicSound(audioFilePath);
+
+            // 等待播放完成
+            while (SpeechManager.Instance.IsPlaying() && overTime < 1000)
+            {
+                overTime++;
+                yield return new WaitForSeconds(0.1f);  // 每 100ms 检查一次
+            }
+
+            // 删除音频文件
+            if (File.Exists(audioFilePath))
+            {
+                File.Delete(audioFilePath);
+                Debug.Log($"SpeechManager: 已删除音频文件: {audioFilePath}");
             }
         }
 
@@ -108,14 +148,11 @@ namespace Module.chat
 
         private void OnSelectSQLGen(string sql, string undo)
         {
-            // 检查SQL语句中是否包含不完整的时间格式
             if (Regex.IsMatch(sql, @"\d{4}/\d{2}/\d{2}(?![\s\S]*\d{2}:\d{2}:\d{2})"))
             {
-                // 如果发现不完整的时间格式，添加默认时间
                 sql = Regex.Replace(sql, @"(\d{4}/\d{2}/\d{2})", "$1 00:00:00");
                 Debug.Log("检测到不完整时间格式，已自动补全：" + sql);
             }
-            // 如果是 INSERT 语句且不包含 TaskID，就自动生成 UUID
             if (sql.Trim().StartsWith("INSERT INTO Tasks", StringComparison.OrdinalIgnoreCase) &&
                 !sql.Contains("TaskID", StringComparison.OrdinalIgnoreCase))
             {
@@ -125,6 +162,7 @@ namespace Module.chat
             }
             ResourcesManager.Instance.DBSourceManager.ExecuteSql(sql, undo, (bool symbol) => { EventManager.Instance.Trigger(ClientEvent.UPDATE_CALENDAR_INFO); });
         }
+
         private bool isProcessingQuery = false;
 
         private void OnGPTSelectResponse(ChatResposeClass.ChatResponse.SelectFunctionArgu arr)
@@ -132,7 +170,6 @@ namespace Module.chat
             if (isProcessingQuery) return;
             isProcessingQuery = true;
 
-            // 1. 检查 SQL 是否合法
             if (string.IsNullOrEmpty(arr.generatedSelect))
             {
                 OnSendFunctionRequest("生成的SQL语句为空。", arr.intent);
@@ -147,14 +184,12 @@ namespace Module.chat
                 return;
             }
 
-            // 2. 处理时间格式
             string sql = arr.generatedSelect;
             if (Regex.IsMatch(sql, @"\d{4}/\d{2}/\d{2}(?![\s\S]*\d{2}:\d{2}:\d{2})"))
             {
                 sql = Regex.Replace(sql, @"(\d{4}/\d{2}/\d{2})", "$1 00:00:00");
             }
 
-            // 3. 执行查询
             ResourcesManager.Instance.DBSourceManager.ExecuteSqlQuery(sql, (results) =>
             {
                 isProcessingQuery = false;
@@ -169,21 +204,20 @@ namespace Module.chat
                 }
             });
         }
+
         protected override void OnUninstall()
         {
             EventManager.Instance.RemoveEvent<string, string>(ClientEvent.ON_SEND_CHAT_REQUEST, OnSendChatMessage);
             EventManager.Instance.RemoveEvent<string, string, string>(ClientEvent.ON_SEND_FUNC_REQUEST, OnSendFunctionRequest);
-            NetworkManager.Instance.RemoveEvent<string>(NetworkEvent.ON_GPT_RESPONSE, OnGptResponse);
+            NetworkManager.Instance.RemoveEvent<string>(NetworkEvent.ON_CHAT_RESPONSE, OnGptResponse);
         }
 
         protected override void OnUpdate()
         {
-            if (Input.GetKey(KeyCode.LeftControl))
-            {
-                if(Input.GetKeyDown(KeyCode.G))
-                    ShowChatPanel();
-            }
+            if (Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.G))
+                ShowChatPanel();
         }
+
         private void ShowChatPanel()
         {
             GUIManager.Instance.ShowWindow<ChatWindow>();
@@ -194,27 +228,29 @@ namespace Module.chat
             var body = new ChatRequestClass.ChatReuestBody();
             body.model = ConfigManager.Instance.Network.Model;
             body.messages = new();
-            body.messages.Add(new ChatRequestClass.ChatReuestBody.Message() { role = "system", content = prompt + "现在的时间是" + DateTime.Now.ToString()});
+            body.messages.Add(new ChatRequestClass.ChatReuestBody.Message() { role = "system", content = $"这是角色提示词{prompt}，现在的时间是{DateTime.Now.ToString()};以下是长期记忆：{Pet.Instance.attributes.importantMemories}。以下是今天的和用户的历史对话：" + GetChatHistoryLast24HoursAsString() });
             body.messages.Add(new ChatRequestClass.ChatReuestBody.Message() { role = "user", content = msg });
             body.safe_mode = false;
 
             var sendMsgRequest = new ChatRequest();
-            sendMsgRequest.Config.URL += "/v1/chat/completions";
+            sendMsgRequest.Config.URL += "/chat/completions";
             sendMsgRequest.Config.Headers["Authorization"] += $"Bearer {ConfigManager.Instance.Network.apiKey}";
             sendMsgRequest.RequestBody = body;
 
             NetworkManager.Instance.SendMessage(sendMsgRequest);
         }
+
         public void OnSendFunctionRequest(string prompt, string msg = null, string func = null)
         {
             var body = new ChatRequestClass.ChatReuestBody();
             body.model = ConfigManager.Instance.Network.Model;
             body.messages = new();
-            body.messages.Add(new ChatRequestClass.ChatReuestBody.Message() { role = "system", content = prompt + "现在的时间是" + DateTime.Now.ToString() });
+            body.messages.Add(new ChatRequestClass.ChatReuestBody.Message() { role = "system",
+                content = $"这是角色提示词{prompt}，现在的时间是{DateTime.Now.ToString()};以下是长期记忆：{Pet.Instance.attributes.importantMemories}。以下是今天的和用户的历史对话："+ GetChatHistoryLast24HoursAsString()});
             if (msg != null)
             {
                 body.messages.Add(new ChatRequestClass.ChatReuestBody.Message() { role = "user", content = msg });
-                chatData.Add("user", msg); // 添加用户消息并保存
+                chatData.Add("user", msg);
             }
             body.functions = new()
             {
@@ -225,31 +261,33 @@ namespace Module.chat
 
             if (func != null)
             {
-                body.function_call = new ChatRequestClass.ChatReuestBody.FunctionCall()
-                {
-                    name = func
-                };
+                body.function_call = new ChatRequestClass.ChatReuestBody.FunctionCall() { name = func };
             }
             else
                 body.function_call = "auto";
 
             var sendMsgRequest = new ChatRequest();
-            sendMsgRequest.Config.URL += "/v1/chat/completions";
+            sendMsgRequest.Config.URL += "/vchat/completions";
             sendMsgRequest.Config.Headers["Authorization"] += $"Bearer {ConfigManager.Instance.Network.apiKey}";
             sendMsgRequest.RequestBody = body;
 
             NetworkManager.Instance.SendMessage(sendMsgRequest, (bool value) =>
             {
-                if (!value)
+                if (!value && msg != null && chatData.History.Count > 0)
                 {
-                    // 如果发送失败，移除最后一条用户消息
-                    if (msg != null && chatData.History.Count > 0)
-                    {
-                        chatData.History.RemoveAt(chatData.History.Count - 1);
-                        chatData.SaveToLocal();
-                    }
+                    chatData.History.RemoveAt(chatData.History.Count - 1);
+                    chatData.SaveToLocal();
                 }
             });
+        }
+        public string GetChatHistoryLast24HoursAsString()
+        {
+            long now = DateTimeOffset.Now.ToUnixTimeSeconds();
+            long twentyFourHoursAgo = now - 86400; // 24小时 = 86400秒
+            var recentMessages = chatData.History
+                .FindAll(msg => msg.Timestamp >= twentyFourHoursAgo)
+                .ConvertAll(msg => $"{msg.Role}: {msg.Content}");
+            return string.Join("\n", recentMessages);
         }
         public List<ChatData.ChatMessage> GetChatHistory()
         {

@@ -18,6 +18,8 @@ namespace Com.Module.Watcher
             Param.packageName = "Watcher";
             Param.componentName = "WatcherWindow";
             Param.Layer = UILayer.Popup;
+            Param.CloseOnClickOutside = false;
+            Param.IsAutoMid = false;
         }
 
         protected override void OnInit(GComponent com)
@@ -36,7 +38,11 @@ namespace Com.Module.Watcher
                 rootWindow.Init(param);
             }
         }
-
+        protected override void OnShow()
+        {
+            base.OnShow();
+            rootWindow.SetXY(Screen.width - rootWindow.width , 0);
+        }
         public override void InitializeParam(ShowWindowParam param)
         {
             base.InitializeParam(param);

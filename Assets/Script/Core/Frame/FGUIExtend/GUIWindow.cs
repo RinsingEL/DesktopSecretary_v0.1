@@ -25,7 +25,8 @@ namespace Core.Framework.FGUI
             public string packageName;
             public string componentName;
             public bool IsFullScreen;
-            public bool IsFit;
+            public bool IsAutoSize;
+            public bool IsAutoMid;
             public UILayer Layer;
             public bool CloseOnClickOutside;
         }
@@ -44,7 +45,8 @@ namespace Core.Framework.FGUI
             Param = new GUIParam
             {
                 IsFullScreen = true,
-                IsFit = true,
+                IsAutoSize = true,
+                IsAutoMid = true,
                 Layer = UILayer.Normal,
                 CloseOnClickOutside = true
             };
@@ -132,7 +134,7 @@ namespace Core.Framework.FGUI
                 }
             }
 
-            if (Param.IsFit) GUIManager.Instance.AutoFitWindow(this);
+            if (Param.IsAutoSize) GUIManager.Instance.AutoFitWindow(this);
             OnShow();
         }
 
@@ -165,7 +167,7 @@ namespace Core.Framework.FGUI
         #region 内部方法
         public void Center()
         {
-            if (_root != null && !_root.isDisposed)
+            if (_root != null && !_root.isDisposed && Param.IsAutoMid)
             {
                 _root.SetXY((GRoot.inst.width - _root.scaleX * _root.sourceWidth) / 2,
                             (GRoot.inst.height - _root.scaleY * _root.sourceHeight) / 2);

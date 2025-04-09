@@ -11,7 +11,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices.ComTypes;
 using UnityEngine;
 
-namespace Core.Frame.Pet
+namespace Core.Framework.Pet
 {
 public class Pet : MonoBehaviour
 {
@@ -35,7 +35,7 @@ public class Pet : MonoBehaviour
     private CubismModel cubismModel;
     private bool isActive = false; // 是否正在交互
     public static Pet Instance;
-    private PetAttributes attributes;  // 添加属性组件引用
+    public PetAttributes attributes;  // 添加属性组件引用
 
     private void Start()
     {

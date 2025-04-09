@@ -2,7 +2,7 @@ using UnityEngine;
 using FairyGUI;
 using Com.Module.CommonResources;
 using Core.Framework.Config;
-using Core.Frame.Pet;
+using Core.Framework.Pet;
 
 namespace Com.Module.Chat
 {

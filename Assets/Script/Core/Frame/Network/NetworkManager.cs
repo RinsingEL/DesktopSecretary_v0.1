@@ -108,7 +108,10 @@ namespace Core.Framework.Network
                 }
             }
         }
-
+        public void TriggerEventTest<T>(string eventName,T content)
+        {
+            TriggerEvent<T>(eventName,content);
+        }
         // TriggerEvent - ÎÞ²ÎÊý
         private void TriggerEvent(string eventName)
         {
@@ -175,9 +178,10 @@ namespace Core.Framework.Network
             if (webRequest.responseCode == 200)
             {
                 string responseText = webRequest.downloadHandler.text;
-                if (webRequest.url == "https://oa.api2d.net/v1/chat/completions")
+                //if (webRequest.url == "https://oa.api2d.net/v1/chat/completions")
+                if (webRequest.url == "https://api.deepseek.com/chat/completions")
                 {
-                    TriggerEvent(NetworkEvent.ON_GPT_RESPONSE, responseText);
+                    TriggerEvent(NetworkEvent.ON_CHAT_RESPONSE, responseText);
                 }
             }
             else

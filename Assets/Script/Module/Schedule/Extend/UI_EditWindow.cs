@@ -4,6 +4,8 @@ using Com.Module.CommonResources;
 using static Com.Module.Schedule.EditWindow;
 using System;
 using Com.Module.Watcher;
+using Core.Framework.Event;
+using Core.Framework.Resource;
 
 namespace Com.Module.Schedule
 {
@@ -87,6 +89,9 @@ namespace Com.Module.Schedule
                 endTime = _param.DueTime,
             };
             GUIManager.Instance.ShowWindow(watcherParam);
+            var tasks = _param.viewModel.GetTasksForDay(_param.date);
+            EventManager.Instance.Trigger<DBClass.Task>(ClientEvent.ON_ENTER_FOCUS, tasks[_param.index]);
+            _param.Hide();
         }
 
         private void EnterEdit()

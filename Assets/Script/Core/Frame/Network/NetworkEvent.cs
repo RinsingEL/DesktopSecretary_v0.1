@@ -2,6 +2,6 @@
 {
     public class NetworkEvent
     {
-        public const string ON_GPT_RESPONSE = "ON_GPT_RESPONSE";
+        public const string ON_CHAT_RESPONSE = "ON_CHAT_RESPONSE";
     }
 }

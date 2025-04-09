@@ -3,25 +3,28 @@ using UnityEngine;
 using System.Text;
 using System.IO;
 using Newtonsoft.Json.Linq;
+using System.Diagnostics;
 
-public class JsonToCSharpClassGenerator : EditorWindow
+public class JsonToCSharpClassGenerator_CSharp : EditorWindow
 {
     private string jsonText = "";
     private string className = "GeneratedClass";
     private Vector2 scrollPos;
-    private StringBuilder allClassesCode; // 用于收集所有类的代码
+    private StringBuilder allClassesCode;
+    private int testIterations = 100; // 测试次数
 
-    [MenuItem("Tools/JSON to C# Class Generator")]
+    [MenuItem("Tools/JSON to C# Class Generator (C#)")]
     public static void ShowWindow()
     {
-        GetWindow<JsonToCSharpClassGenerator>("JSON to C# Class Generator");
+        GetWindow<JsonToCSharpClassGenerator_CSharp>("JSON to C# Class Generator (C#)");
     }
 
     private void OnGUI()
     {
-        GUILayout.Label("JSON to C# Class Generator", EditorStyles.boldLabel);
+        GUILayout.Label("JSON to C# Class Generator (C#)", EditorStyles.boldLabel);
 
         className = EditorGUILayout.TextField("Class Name", className);
+        testIterations = EditorGUILayout.IntField("Test Iterations", testIterations);
 
         GUILayout.Label("Input JSON:");
         scrollPos = EditorGUILayout.BeginScrollView(scrollPos);
@@ -31,6 +34,11 @@ public class JsonToCSharpClassGenerator : EditorWindow
         if (GUILayout.Button("Generate C# Class"))
         {
             GenerateClassFromJson();
+        }
+
+        if (GUILayout.Button("Test Performance"))
+        {
+            TestPerformance();
         }
     }
 
@@ -44,17 +52,13 @@ public class JsonToCSharpClassGenerator : EditorWindow
 
         try
         {
-            // 初始化 StringBuilder 用于收集所有代码
             allClassesCode = new StringBuilder();
             allClassesCode.AppendLine("using System;");
             allClassesCode.AppendLine("using UnityEngine;");
             allClassesCode.AppendLine();
 
             JObject jsonObj = JObject.Parse(jsonText);
-            if (jsonObj == null)
-            {
-                throw new System.Exception("转化不成 JSON");
-            }
+            if (jsonObj == null) throw new System.Exception("转化不成 JSON");
 
             GenerateClassCode(className, jsonObj);
             SaveClassToFile(allClassesCode.ToString());
@@ -62,8 +66,39 @@ public class JsonToCSharpClassGenerator : EditorWindow
         catch (System.Exception e)
         {
             EditorUtility.DisplayDialog("Error", $"无法转化: {e.Message}为CS类", "OK");
-            Debug.LogError($"JSON Parse Error: {e.StackTrace}");
+            UnityEngine.Debug.LogError($"JSON Parse Error: {e.StackTrace}");
         }
+    }
+
+    private void TestPerformance()
+    {
+        if (string.IsNullOrEmpty(jsonText))
+        {
+            EditorUtility.DisplayDialog("Error", "请先输入JSON", "OK");
+            return;
+        }
+
+        Stopwatch stopwatch = new Stopwatch();
+        double totalTime = 0;
+
+        for (int i = 0; i < testIterations; i++)
+        {
+            stopwatch.Restart();
+            allClassesCode = new StringBuilder();
+            allClassesCode.AppendLine("using System;");
+            allClassesCode.AppendLine("using UnityEngine;");
+            allClassesCode.AppendLine();
+
+            JObject jsonObj = JObject.Parse(jsonText);
+            GenerateClassCode(className, jsonObj);
+            stopwatch.Stop();
+
+            totalTime += stopwatch.Elapsed.TotalMilliseconds;
+        }
+
+        double averageTime = totalTime / testIterations;
+        UnityEngine.Debug.Log($"C# Version - Average Time ({testIterations} iterations): {averageTime:F4} ms");
+        UnityEngine.Debug.Log($"C# Version - Average Time ({testIterations} iterations): {totalTime:F4} ms");
     }
 
     private void GenerateClassCode(string className, JObject jsonObj)

@@ -8,7 +8,7 @@ namespace Core.Framework.Network.ChatSystem
         {
             Config = new RequestConfig()
             {
-                URL = "https://oa.api2d.net",
+                URL = "https://api.deepseek.com",//"https://oa.api2d.net",
                 Method = HttpMethod.POST,
                 Headers = new Dictionary<string, string>()
                 {

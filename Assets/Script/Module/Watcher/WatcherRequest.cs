@@ -8,7 +8,7 @@ namespace Com.Module.Watcher
     {
         public class WatcherRequestBody
         {
-            public string model = "gpt-3.5-turbo";
+            public string model = "deepseek-chat";//"gpt-3.5-turbo";
             public Message[] messages;
             public bool safe_mode = false;
         }
@@ -23,7 +23,7 @@ namespace Com.Module.Watcher
         {
             Config = new RequestConfig
             {
-                URL = "https://oa.api2d.net/v1/chat/completions",
+                URL = "https://oa.api2d.net/chat/completions",
                 Method = HttpMethod.POST,
                 Headers = new Dictionary<string, string>
                 {

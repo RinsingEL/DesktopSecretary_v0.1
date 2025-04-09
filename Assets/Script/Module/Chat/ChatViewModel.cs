@@ -24,7 +24,7 @@ public class ChatViewModel
         body.safe_mode = false;
 
         var sendMsgRequest = new ChatRequest();
-        sendMsgRequest.Config.URL += "/v1/chat/completions";
+        sendMsgRequest.Config.URL += "/chat/completions";
         sendMsgRequest.Config.Headers["Authorization"] += $"Bearer {ConfigManager.Instance.Network.apiKey}";
         sendMsgRequest.RequestBody = body;
 
@@ -50,7 +50,7 @@ public class ChatViewModel
             body.function_call = "auto";
 
         var sendMsgRequest = new ChatRequest();
-        sendMsgRequest.Config.URL += "/v1/chat/completions";
+        sendMsgRequest.Config.URL += "/chat/completions";
         sendMsgRequest.Config.Headers["Authorization"] += $"Bearer {ConfigManager.Instance.Network.apiKey}";
         sendMsgRequest.RequestBody = body;
 

@@ -15,7 +15,7 @@ namespace Core.Framework.Config
                 return "";
             }
         }
-        public List<string> model = new List<string>() { "gpt-3.5-turbo" };
+        public List<string> model = new List<string>() { "deepseek-chat" };
         public void Load()
         {
             // 从持久化存储（如JSON文件或PlayerPrefs）加载网络配置

@@ -2,8 +2,6 @@ using System;
 using System.Collections.Generic;
 using FairyGUI;
 using UnityEngine;
-using static UnityEditor.PlayerSettings;
-using static UnityEngine.GraphicsBuffer;
 
 namespace Core.Framework.FGUI
 {
@@ -45,7 +43,7 @@ namespace Core.Framework.FGUI
             GRoot.inst.onSizeChanged.Add(() =>
             {
                 foreach (var window in _activeWindows.Values)
-                    if (window.Param.IsFit) AutoFitWindow(window);
+                    if (window.Param.IsAutoSize) AutoFitWindow(window);
             });
         }
 

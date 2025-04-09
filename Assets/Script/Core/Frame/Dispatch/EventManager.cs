@@ -167,6 +167,11 @@ namespace Core.Framework.Event
                 (del as Action<T1, T2 , T3>)?.Invoke(param1, param2 , param3);
             }
         }
+
+        internal void AddEvent<T>(object oN_ENTER_FOCUS, Action<T> markAsProcessed)
+        {
+            throw new NotImplementedException();
+        }
     }
 
     // 用于定义事件名的静态类linww，后续改成int的，用string太蠢了
@@ -192,5 +197,6 @@ namespace Core.Framework.Event
         //桌宠
         public const string ON_CLICK_PET = "ON_CLICK_PET";
         public const string ON_PET_EMOTION_CHANGE = "ON_PET_EMOTION_CHANGE";
+        public const string ON_ENTER_FOCUS = "ON_ENTER_FOCUS";
     }
 }

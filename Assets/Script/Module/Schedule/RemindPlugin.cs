@@ -22,6 +22,7 @@ public class RemindPlugin : PluginBase
         _viewModel = CalendarViewModel.Instance;
         checkCoroutineId = CoroutineManager.Instance.StartManagedCoroutine(CheckTaskReminder());
         LoadProcessedTasks();
+        EventManager.Instance.AddEvent<DBClass.Task>(ClientEvent.ON_ENTER_FOCUS, MarkAsProcessed);
     }
 
     protected override void OnUpdate()
@@ -34,6 +35,7 @@ public class RemindPlugin : PluginBase
         {
             CoroutineManager.Instance.StopManagedCoroutine(checkCoroutineId);
         }
+        EventManager.Instance.RemoveEvent<DBClass.Task>(ClientEvent.ON_ENTER_FOCUS, MarkAsProcessed);
         _processedTasks.Clear();
     }
 
@@ -49,7 +51,6 @@ public class RemindPlugin : PluginBase
                 if (ShouldRemind(task) && !_processedTasks.Contains(task.TaskID))
                 {
                     SendReminderToGPT(task);
-                    MarkAsProcessed(task);
                 }
             }
         }
@@ -58,14 +59,14 @@ public class RemindPlugin : PluginBase
     private List<DBClass.Task> GetAllValidTasks()
     {
         return _viewModel.GetAllTasks().FindAll(t => 
-            t.Status == 0 || t.Status == 1); // 只处理未完成和进行中的任务
+            t.Status == 0); // 只处理未完成的任务
     }
 
     private bool ShouldRemind(DBClass.Task task)
     {
         return task.DueDate.HasValue && 
-               DateTime.Now >= task.DueDate.Value.AddMinutes(-15) && 
-               DateTime.Now <= task.DueDate.Value;
+               DateTime.Now >= task.StartedAt.AddMinutes(-15) && 
+               DateTime.Now <= task.StartedAt.AddMinutes(10);
     }
 
     private void SendReminderToGPT(DBClass.Task task)

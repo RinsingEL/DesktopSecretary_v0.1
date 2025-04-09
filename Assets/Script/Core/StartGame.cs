@@ -4,7 +4,7 @@ using Com.Module.CommonResources;
 using Com.Module.MainUI;
 using Com.Module.Schedule;
 using Com.Module.Watcher;
-using Core.Frame.Pet;
+using Core.Framework.Pet;
 using Core.Framework.Config;
 using Core.Framework.Event;
 using Core.Framework.FGUI;
