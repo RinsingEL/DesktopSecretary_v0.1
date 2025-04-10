@@ -17,6 +17,7 @@ namespace Com.Module.Watcher
         public GButton m_FinishBtn;
         public GTextField m_clockTime;
         public GGroup m_all;
+        public GButton m_folderBtn;
         public const string URL = "ui://jshw9ftji9oh0";
 
         public static UI_WatcherWindow CreateInstance()
@@ -38,6 +39,7 @@ namespace Com.Module.Watcher
             m_FinishBtn = (GButton)GetChild("FinishBtn");
             m_clockTime = (GTextField)GetChild("clockTime");
             m_all = (GGroup)GetChild("all");
+            m_folderBtn = (GButton)GetChild("folderBtn");
         }
     }
 }

@@ -198,5 +198,6 @@ namespace Core.Framework.Event
         public const string ON_CLICK_PET = "ON_CLICK_PET";
         public const string ON_PET_EMOTION_CHANGE = "ON_PET_EMOTION_CHANGE";
         public const string ON_ENTER_FOCUS = "ON_ENTER_FOCUS";
+        public const string ON_FINISH_FOCUS = "ON_FINISH_FOCUS";
     }
 }

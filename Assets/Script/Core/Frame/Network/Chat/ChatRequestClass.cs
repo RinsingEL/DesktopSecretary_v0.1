@@ -27,7 +27,7 @@ namespace Core.Framework.Network.ChatSystem
             public string model;
             public List<Message> messages;
             public bool safe_mode;
-            public List<Tool> tools; // 使用明确的 Tool 类型
+            public List<Tool> tools;
         }
 
         // 函数 1: 生成 SQL SELECT 查询
@@ -102,7 +102,7 @@ namespace Core.Framework.Network.ChatSystem
         public class ReplyWithEmotionFunctionCalling
         {
             public string name = "generateReplyWithEmotion";
-            public string description = "根据用户输入或上下文生成带有情感的回复消息，回复包括消息内容和反映语气或情感的情感类型。";
+            public string description = "根据用户输入或上下文生成带有情感的回复消息，并评估对话对好感度的影响。";
             public Parameters parameters = new Parameters();
 
             [Serializable]
@@ -110,7 +110,7 @@ namespace Core.Framework.Network.ChatSystem
             {
                 public string type = "object";
                 public Properties properties = new Properties();
-                public string[] required = new string[] { "replyContent", "emotion" };
+                public string[] required = new string[] { "replyContent", "emotion", "favorabilityImpact" };
                 public bool additionalProperties = false;
             }
 
@@ -119,6 +119,7 @@ namespace Core.Framework.Network.ChatSystem
             {
                 public Property replyContent = new Property { type = "string", description = "回复消息内容，例如 '干得漂亮，任务完成了！' 或 '抱歉，我找不到那个。'" };
                 public EmotionProperty emotion = new EmotionProperty();
+                public Property favorabilityImpact = new Property { type = "number", description = "对话对好感度的影响值，范围为 -5 到 +3" };
             }
 
             [Serializable]
@@ -132,8 +133,40 @@ namespace Core.Framework.Network.ChatSystem
             public class EmotionProperty
             {
                 public string type = "string";
-                public string description = "只有情感强烈是才会从以下枚举里面选择表情展现，有 'happy'、'sad'、'confuse'、'mad'、'shy'";
-                public string[] @enum = new string[] { "happy", "sad", "confuse", "mad", "shy" }; // @enum 用于避免 C# 关键字冲突
+                public string description = "与回复相关的情感，例如 'happy'、'sad'、'confuse'、'mad'、'shy'";
+                public string[] @enum = new string[] { "happy", "sad", "confuse", "mad", "shy" };
+            }
+        }
+
+        //函数4：专注检测
+        [Serializable]
+        public class CheckFocusFunctionCalling
+        {
+            public string name = "checkFocus";
+            public string description = "检测用户的专注状态，返回 AI 的回复内容和专注检测结果。";
+            public Parameters parameters = new Parameters();
+
+            [Serializable]
+            public class Parameters
+            {
+                public string type = "object";
+                public Properties properties = new Properties();
+                public string[] required = new string[] { "replyContent", "focusResult" };
+                public bool additionalProperties = false;
+            }
+
+            [Serializable]
+            public class Properties
+            {
+                public Property replyContent = new Property { type = "string", description = "AI 的回复内容，例如 '你看起来很专注！' 或 '你似乎有些分心。'" };
+                public Property focusResult = new Property { type = "boolean", description = "专注检测结果，true 表示专注，false 表示不专注" };
+            }
+
+            [Serializable]
+            public class Property
+            {
+                public string type;
+                public string description;
             }
         }
     }
@@ -198,6 +231,19 @@ namespace Core.Framework.Network.ChatSystem
                     public string reply;
                     public string intent;
                     public string generatedSelect;
+                }
+                [Serializable]
+                public class ReplyWithEmotionArgu
+                {
+                    public string replyContent;
+                    public string emotion;
+                    public float favorabilityImpact;
+                }
+                [Serializable]
+                public class CheckFocusArgu
+                {
+                    public string replyContent;
+                    public bool focusResult;
                 }
             }
         }

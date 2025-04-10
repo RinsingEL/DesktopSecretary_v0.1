@@ -71,12 +71,38 @@ namespace Animation
         }
         public class ShyState : AnimationState
         {
+            private bool _shouldTransition = false;
+            private string _delayCoroutineId; // 记录延时协程的ID
             public ShyState(Animator anim) : base(anim) { }
             public override void Enter()
             {
                 base.Enter();
+
+                _shouldTransition = false;
+                _delayCoroutineId = CoroutineManager.Instance.Delay(3f, () => _shouldTransition = true);
+            }
+            public override void Update()
+            {
+                base.Update();
                 SmoothSetFloat("EmoX", -1);
-                SmoothSetFloat("EmoY", 0);// 播放Idle动画
+                SmoothSetFloat("EmoY", 0); // 播放Idle动画
+            }
+
+            public override bool ShouldTransNewState(out AnimationState newState)
+            {
+                newState = new IdleState(animator);
+                return _shouldTransition;
+            }
+
+            // 清理协程
+            public override void Exit()
+            {
+                base.Exit();
+                if (!string.IsNullOrEmpty(_delayCoroutineId))
+                {
+                    CoroutineManager.Instance.StopManagedCoroutine(_delayCoroutineId);
+                    _delayCoroutineId = null; // 清空ID
+                }
             }
         }
         public class MadState : AnimationState

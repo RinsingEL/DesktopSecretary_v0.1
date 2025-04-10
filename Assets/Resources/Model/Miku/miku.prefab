@@ -14824,9 +14824,10 @@ GameObject:
   - component: {fileID: 3249097218138095169}
   - component: {fileID: 3422821797794948027}
   - component: {fileID: 6840797213933436920}
+  - component: {fileID: 8237554256932123141}
   m_Layer: 0
   m_Name: D_BODY_01
-  m_TagString: Untagged
+  m_TagString: Body
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -14933,3 +14934,16 @@ MonoBehaviour:
   _renderOrder: 29
   _depthOffset: 0.00001
   _opacity: 1
+--- !u!114 &8237554256932123141
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9146227836746421074}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4d9ccdc2a16e5b4d8343e2cdb8dc9fe, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Precision: 0

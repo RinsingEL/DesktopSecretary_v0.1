@@ -21,56 +21,39 @@ namespace Core.Framework.Pet
         public float importance;
     }
 
-    [Serializable]
-    public class GenerateMemory
-    {
-        public string name = "generateMemory";
-        public string description = "根据旧的关键记忆和前一天的对话生成新的关键记忆。";
-        public Parameters parameters = new Parameters();
-
-        [Serializable]
-        public class Parameters
-        {
-            public string type = "object";
-            public Properties properties = new Properties();
-            public string[] required = new string[] { "memory" };
-            public bool additionalProperties = false;
-        }
-
-        [Serializable]
-        public class Properties
-        {
-            public Property memory = new Property { type = "string", description = "新的关键记忆内容" };
-        }
-
-        [Serializable]
-        public class Property
-        {
-            public string type;
-            public string description;
-        }
-    }
-
-    [Serializable]
-    public class GenerateMemoryResponseArgu
-    {
-        public string memory;
-    }
-
     public class PetAttributes : MonoBehaviour
     {
         private List<Memory> shortTermMemories = new List<Memory>();
         public string importantMemories;
         private const int MAX_MEMORIES = 10;
 
-        public float userTrustScore { get; private set; } = 50f;
-        public float userAffectionScore { get; private set; } = 50f;
-        public float userRespectScore { get; private set; } = 50f;
+        // 好感度系统
+        private float favorability = 50f; // 初始值为 50，范围 0-200
+
+        private List<ChatRequestClass.ChatRequestBody.Message> currentConversation = new List<ChatRequestClass.ChatRequestBody.Message>();
 
         private void Start()
         {
             NetworkManager.Instance.AddEvent<string>(NetworkEvent.ON_CHAT_RESPONSE, OnNewMemoryResponse);
             RefreshMemory();
+        }
+
+        // 增加好感度
+        public void IncreaseFavorability(float delta)
+        {
+            favorability = Mathf.Clamp(favorability + delta, 0f, 200f);
+        }
+
+        // 减少好感度
+        public void DecreaseFavorability(float delta)
+        {
+            favorability = Mathf.Clamp(favorability - delta, 0f, 200f);
+        }
+
+        // 获取当前好感度
+        public float GetFavorability()
+        {
+            return favorability;
         }
 
         public void RefreshMemory()
@@ -109,9 +92,11 @@ namespace Core.Framework.Pet
                 body.safe_mode = false;
 
                 body.tools = new List<ChatRequestClass.ChatRequestBody.Tool>
-        {
-            new ChatRequestClass.ChatRequestBody.Tool { type = "function", function = new GenerateMemory() }
-        };
+                {
+                    new ChatRequestClass.ChatRequestBody.Tool { type = "function", function = new GenerateMemory() }
+                };
+
+                currentConversation = new List<ChatRequestClass.ChatRequestBody.Message>(body.messages);
 
                 var sendMsgRequest = new ChatRequest();
                 sendMsgRequest.Config.URL += "/chat/completions";
@@ -134,6 +119,12 @@ namespace Core.Framework.Pet
                 {
                     if (choice.finish_reason == "tool_calls" && choice.message.tool_calls != null && choice.message.tool_calls.Length > 0)
                     {
+                        currentConversation.Add(new ChatRequestClass.ChatRequestBody.Message
+                        {
+                            role = choice.message.role,
+                            content = choice.message.content
+                        });
+
                         var toolCall = choice.message.tool_calls[0];
                         if (toolCall.function.name == "generateMemory")
                         {
@@ -141,7 +132,7 @@ namespace Core.Framework.Pet
                             if (!string.IsNullOrEmpty(arr.memory))
                             {
                                 importantMemories = arr.memory;
-                                ChatPlugin.Instance.SendToolResponse(toolCall.id, arr.memory); // 追加工具响应
+                                ChatPlugin.Instance.SendToolResponse(toolCall.id, arr.memory);
                             }
                         }
                     }
@@ -170,38 +161,41 @@ namespace Core.Framework.Pet
         {
             return new List<Memory>(shortTermMemories);
         }
+    }
 
-        public void UpdateUserTrust(float delta)
+    [Serializable]
+    public class GenerateMemory
+    {
+        public string name = "generateMemory";
+        public string description = "根据旧的关键记忆和前一天的对话生成新的关键记忆。";
+        public Parameters parameters = new Parameters();
+
+        [Serializable]
+        public class Parameters
         {
-            userTrustScore = Mathf.Clamp(userTrustScore + delta, 0f, 100f);
+            public string type = "object";
+            public Properties properties = new Properties();
+            public string[] required = new string[] { "memory" };
+            public bool additionalProperties = false;
         }
 
-        public void UpdateUserAffection(float delta)
+        [Serializable]
+        public class Properties
         {
-            userAffectionScore = Mathf.Clamp(userAffectionScore + delta, 0f, 100f);
+            public Property memory = new Property { type = "string", description = "新的关键记忆内容" };
         }
 
-        public void UpdateUserRespect(float delta)
+        [Serializable]
+        public class Property
         {
-            userRespectScore = Mathf.Clamp(userRespectScore + delta, 0f, 100f);
+            public string type;
+            public string description;
         }
+    }
 
-        public float GetOverallScore()
-        {
-            return (userTrustScore + userAffectionScore + userRespectScore) / 3f;
-        }
-
-        public string GetPersonality()
-        {
-            float overallScore = GetOverallScore();
-            if (overallScore >= 80)
-                return "非常友好和信任";
-            else if (overallScore >= 60)
-                return "友好但有些谨慎";
-            else if (overallScore >= 40)
-                return "略显疏离";
-            else
-                return "较为冷淡";
-        }
+    [Serializable]
+    public class GenerateMemoryResponseArgu
+    {
+        public string memory;
     }
 }

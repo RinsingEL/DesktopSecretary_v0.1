@@ -87,6 +87,7 @@ namespace Com.Module.Schedule
                 description = _param.description,
                 startTime = _param.StartAt,
                 endTime = _param.DueTime,
+                UUID = _param.viewModel.GetTasksForDay(_param.date)[_param.index].TaskID
             };
             GUIManager.Instance.ShowWindow(watcherParam);
             var tasks = _param.viewModel.GetTasksForDay(_param.date);

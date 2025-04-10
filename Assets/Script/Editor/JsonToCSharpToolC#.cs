@@ -11,7 +11,7 @@ public class JsonToCSharpClassGenerator_CSharp : EditorWindow
     private string className = "GeneratedClass";
     private Vector2 scrollPos;
     private StringBuilder allClassesCode;
-    private int testIterations = 100; // 测试次数
+    private int testIterations = 1; // 测试次数
 
     [MenuItem("Tools/JSON to C# Class Generator (C#)")]
     public static void ShowWindow()
@@ -98,7 +98,7 @@ public class JsonToCSharpClassGenerator_CSharp : EditorWindow
 
         double averageTime = totalTime / testIterations;
         UnityEngine.Debug.Log($"C# Version - Average Time ({testIterations} iterations): {averageTime:F4} ms");
-        UnityEngine.Debug.Log($"C# Version - Average Time ({testIterations} iterations): {totalTime:F4} ms");
+        UnityEngine.Debug.Log($"C# Version - totalTime ({testIterations} iterations): {totalTime:F4} ms");
     }
 
     private void GenerateClassCode(string className, JObject jsonObj)

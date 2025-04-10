@@ -4,6 +4,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Core.Framework.Utility;
+using Com.Module.Schedule;
+using Core.Framework.Event;
 
 namespace Com.Module.Watcher
 {
@@ -20,6 +22,7 @@ namespace Com.Module.Watcher
             this.param = param;
             UpdateView();
             SetupButtons();
+            WatcherPlugin.Instance.SetCurrentTask(param.title);
         }
 
         private void UpdateView()
@@ -48,6 +51,21 @@ namespace Com.Module.Watcher
             m_startBtn.onClick.Add(OnStartClick);
             m_resetBtn.onClick.Add(OnResetClick);
             m_FinishBtn.onClick.Add(OnFinishClick);
+            m_folderBtn.onClick.Set(OnFolderClick);
+        }
+
+        private void OnFolderClick(EventContext context)
+        {
+            if(m_IsFold.selectedIndex == 0)
+            {
+                m_IsFold.selectedIndex = 1;
+                SetXY(Screen.width - m_folderBtn.width * Screen.width / 1920, 200);
+            }
+            else
+            {
+                m_IsFold.selectedIndex = 0;
+                SetXY(Screen.width - width * Screen.width / 1920, 200);
+            }
         }
 
         private void OnStartClick()
@@ -55,22 +73,27 @@ namespace Com.Module.Watcher
             if (!isRunning)
             {
                 StartTimer();
+                WatcherPlugin.Instance.EnterFocus();
             }
             else
             {
                 PauseTimer();
+                WatcherPlugin.Instance.ExitFocus();
             }
         }
 
         private void OnResetClick()
         {
             ResetTimer();
+            WatcherPlugin.Instance.ExitFocus();
         }
 
         private void OnFinishClick()
         {
             StopTimer();
-            // TODO: 通知外部计时完成
+            WatcherPlugin.Instance.ExitFocus();
+            param.Hide();
+            EventManager.Instance.Trigger<string>(ClientEvent.ON_FINISH_FOCUS, param.UUID);
         }
 
         private void StartTimer()
@@ -123,7 +146,7 @@ namespace Com.Module.Watcher
             }
             
             StopTimer();
-            // TODO: 通知外部计时完成
+
         }
 
         private void UpdateClockDisplay()

@@ -64,8 +64,7 @@ public class RemindPlugin : PluginBase
 
     private bool ShouldRemind(DBClass.Task task)
     {
-        return task.DueDate.HasValue && 
-               DateTime.Now >= task.StartedAt.AddMinutes(-15) && 
+        return  DateTime.Now >= task.StartedAt.AddMinutes(-15) && 
                DateTime.Now <= task.StartedAt.AddMinutes(10);
     }
 

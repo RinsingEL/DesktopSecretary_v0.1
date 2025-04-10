@@ -15,6 +15,7 @@ namespace Com.Module.Schedule
             _calendarData = new CalendarData();
             _calendarData.Load();
             EventManager.Instance.AddEvent(ClientEvent.UPDATE_CALENDAR_INFO, OnUpdateInfo);
+            EventManager.Instance.AddEvent<string>(ClientEvent.ON_FINISH_FOCUS, SetTaskComplete);
             Application.quitting += OnApplicationQuit;
         }
 
@@ -116,10 +117,23 @@ namespace Com.Module.Schedule
                 EventManager.Instance.Trigger(ClientEvent.UPDATE_CALENDAR_VIEW);
             }
         }
+        public void SetTaskComplete(string taskId)
+        {
+            var task = _calendarData.tasks.Find(t => t.TaskID == taskId);
+            if (task != null)
+            {
+                task.Status = 2;
+                task.UpdatedAt = DateTime.Now;
+
+                _calendarData.Save();
+                EventManager.Instance.Trigger(ClientEvent.UPDATE_CALENDAR_VIEW);
+            }
+        }
 
         public void Cleanup()
         {
             EventManager.Instance.RemoveEvent(ClientEvent.UPDATE_CALENDAR_INFO, OnUpdateInfo);
+            EventManager.Instance.RemoveEvent<string>(ClientEvent.ON_FINISH_FOCUS, SetTaskComplete);
             Application.quitting -= OnApplicationQuit;
         }
     }

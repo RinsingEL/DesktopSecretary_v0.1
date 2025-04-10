@@ -17,9 +17,11 @@ namespace Com.Module.Watcher
             Param.packagePath = "UI/Watcher";
             Param.packageName = "Watcher";
             Param.componentName = "WatcherWindow";
-            Param.Layer = UILayer.Popup;
+            Param.Layer = UILayer.Normal;
             Param.CloseOnClickOutside = false;
             Param.IsAutoMid = false;
+            Param.IsFullScreen = false;
+            Param.HideByDisappear = false;
         }
 
         protected override void OnInit(GComponent com)
@@ -41,12 +43,13 @@ namespace Com.Module.Watcher
         protected override void OnShow()
         {
             base.OnShow();
-            rootWindow.SetXY(Screen.width - rootWindow.width , 0);
+            rootWindow.SetXY(Screen.width - rootWindow.width * Screen.width / 1920 , 200);
         }
         public override void InitializeParam(ShowWindowParam param)
         {
             base.InitializeParam(param);
             this.param = param as WatcherWindowParam;
+            this.param.Hide = Hide;
             if (rootWindow != null)
             {
                 rootWindow.Init(this.param);
@@ -63,6 +66,8 @@ namespace Com.Module.Watcher
             public string description;     // 窗口描述
             public DateTime startTime;     // 开始时间
             public DateTime endTime;       // 结束时间
+            public string UUID;
+            public Action Hide;
         }
     }
 

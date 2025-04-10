@@ -29,6 +29,7 @@ namespace Core.Framework.FGUI
             public bool IsAutoMid;
             public UILayer Layer;
             public bool CloseOnClickOutside;
+            public bool HideByDisappear;
         }
 
         public GUIParam Param;
@@ -48,7 +49,8 @@ namespace Core.Framework.FGUI
                 IsAutoSize = true,
                 IsAutoMid = true,
                 Layer = UILayer.Normal,
-                CloseOnClickOutside = true
+                CloseOnClickOutside = true,
+                HideByDisappear = true,
             };
         }
 

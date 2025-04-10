@@ -243,7 +243,8 @@ public class DesktopManager : MonoBehaviour
             // 失去焦点时隐藏所有窗口
             foreach (var window in GUIManager.Instance._activeWindows.Values)
             {
-                window.Hide();
+                if(window.Param.HideByDisappear)
+                    window.Hide();
             }
         }
     }

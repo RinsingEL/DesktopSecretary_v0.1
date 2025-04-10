@@ -91,6 +91,14 @@ namespace Module.chat
                             replyText = arguments["replyContent"];
                             SendToolResponse(toolCall.id, arguments["replyContent"]);
                         }
+                        else if (toolCall.function.name == "checkFocus")
+                        {
+                            var focusArgu = JsonConvert.DeserializeObject<ChatResponseClass.ChatResponse.CheckFocusArgu>(toolCall.function.arguments);
+                            replyText = focusArgu.replyContent;
+                            // 这里可以根据 focusResult 做额外处理，例如记录专注状态
+                            Debug.Log($"Focus Result: {focusArgu.focusResult}");
+                            SendToolResponse(toolCall.id, focusArgu.replyContent);
+                        }
                     }
                     else if (choice.finish_reason == "stop")
                     {
@@ -256,14 +264,23 @@ namespace Module.chat
             var body = new ChatRequestClass.ChatRequestBody();
             body.model = ConfigManager.Instance.Network.Model;
             body.messages = new List<ChatRequestClass.ChatRequestBody.Message>();
-            body.messages.Add(new ChatRequestClass.ChatRequestBody.Message { role = "system", content = $"这是角色提示词{prompt}，现在的时间是{DateTime.Now.ToString()};以下是长期记忆：{Pet.Instance.attributes.importantMemories}。以下是今天的和用户的历史对话：" + GetChatHistoryLast24HoursAsString() });
+            body.messages.Add(new ChatRequestClass.ChatRequestBody.Message
+            {
+                role = "system",
+                content = $"这是角色提示词{prompt}，现在的时间是{DateTime.Now.ToString()};以下是长期记忆：{Pet.Instance.attributes.importantMemories}。当前好感度为:{Pet.Instance.attributes.GetFavorability()}(最大200，最低0)。以下是今天的和用户的历史对话：" + GetChatHistoryLast24HoursAsString()
+            });
             body.messages.Add(new ChatRequestClass.ChatRequestBody.Message { role = "user", content = msg });
             body.safe_mode = false;
+
+            //var currentConversation = new List<ChatRequestClass.ChatRequestBody.Message>(body.messages);
 
             var sendMsgRequest = new ChatRequest();
             sendMsgRequest.Config.URL += "/chat/completions";
             sendMsgRequest.Config.Headers["Authorization"] += $"Bearer {ConfigManager.Instance.Network.apiKey}";
             sendMsgRequest.RequestBody = body;
+
+            string jsonRequest = JsonConvert.SerializeObject(body, Formatting.Indented);
+            Debug.Log("Sending request: " + jsonRequest);
 
             NetworkManager.Instance.SendMessage(sendMsgRequest);
         }
@@ -276,27 +293,30 @@ namespace Module.chat
             body.messages.Add(new ChatRequestClass.ChatRequestBody.Message
             {
                 role = "system",
-                content = $"这是角色提示词{prompt}，现在的时间是{DateTime.Now.ToString()};以下是长期记忆：{Pet.Instance.attributes.importantMemories}。以下是今天的和用户的历史对话：" + GetChatHistoryLast24HoursAsString()
+                content = $"这是角色提示词{prompt}，现在的时间是{DateTime.Now.ToString()};以下是长期记忆：{Pet.Instance.attributes.importantMemories}。当前好感度为:{Pet.Instance.attributes.GetFavorability()}(最大200，最低0)。以下是今天的和用户的历史对话：" + GetChatHistoryLast24HoursAsString()
             });
             if (msg != null)
             {
                 body.messages.Add(new ChatRequestClass.ChatRequestBody.Message { role = "user", content = msg });
                 chatData.Add("user", msg);
             }
+            body.safe_mode = false;
 
             body.tools = new List<ChatRequestClass.ChatRequestBody.Tool>
     {
         new ChatRequestClass.ChatRequestBody.Tool { type = "function", function = new ChatRequestClass.SelectFunctionCalling() },
         new ChatRequestClass.ChatRequestBody.Tool { type = "function", function = new ChatRequestClass.CrudFunctionCalling() },
-        new ChatRequestClass.ChatRequestBody.Tool { type = "function", function = new ChatRequestClass.ReplyWithEmotionFunctionCalling() }
+        new ChatRequestClass.ChatRequestBody.Tool { type = "function", function = new ChatRequestClass.ReplyWithEmotionFunctionCalling() },
+        new ChatRequestClass.ChatRequestBody.Tool { type = "function", function = new ChatRequestClass.CheckFocusFunctionCalling() } // 新增专注检测工具
     };
+
+            //var currentConversation = new List<ChatRequestClass.ChatRequestBody.Message>(body.messages);
 
             var sendMsgRequest = new ChatRequest();
             sendMsgRequest.Config.URL += "/chat/completions";
             sendMsgRequest.Config.Headers["Authorization"] += $"Bearer {ConfigManager.Instance.Network.apiKey}";
             sendMsgRequest.RequestBody = body;
 
-            // 使用 Newtonsoft.Json 序列化并打印调试信息
             string jsonRequest = JsonConvert.SerializeObject(body, Formatting.Indented);
             Debug.Log("Sending request: " + jsonRequest);
 
