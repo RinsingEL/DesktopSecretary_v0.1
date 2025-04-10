@@ -16,6 +16,7 @@ using System.Collections;
 using System.IO;
 using Core.Framework.Utility;
 using Core.Framework.Pet;
+using Core.Framework.Network.ChatSystem.Core.Framework.Network.ChatSystem;
 
 namespace Module.chat
 {
@@ -47,38 +48,48 @@ namespace Module.chat
 
         private void OnGptResponse(string msg)
         {
-            var chatResponse = JsonUtility.FromJson<ChatResposeClass.ChatResponse>(msg);
+            var chatResponse = JsonConvert.DeserializeObject<ChatResponseClass.ChatResponse>(msg);
             if (chatResponse != null && chatResponse.choices.Length > 0)
             {
                 foreach (var choice in chatResponse.choices)
                 {
                     string replyText = null;
 
-                    if (choice.finish_reason == "function_call")
+                    if (choice.finish_reason == "tool_calls" && choice.message.tool_calls != null && choice.message.tool_calls.Length > 0)
                     {
-                        if (choice.message.function_call.name == "generateSelectQuery")
+                        var toolCall = choice.message.tool_calls[0];
+                        var arguments = JsonConvert.DeserializeObject<Dictionary<string, string>>(toolCall.function.arguments);
+
+                        if (toolCall.function.name == "generateSelectQuery")
                         {
-                            var arr = JsonUtility.FromJson<ChatResposeClass.ChatResponse.SelectFunctionArgu>(choice.message.function_call.arguments);
-                            OnGPTSelectResponse(arr);
-                            if (arr.reply != string.Empty)
+                            var argu = new ChatResponseClass.ChatResponse.SelectFunctionArgu
                             {
-                                replyText = arr.reply;
+                                reply = arguments.GetValueOrDefault("reply", ""),
+                                intent = arguments["intent"],
+                                generatedSelect = arguments["generatedSelect"]
+                            };
+                            OnGPTSelectResponse(argu);
+                            if (!string.IsNullOrEmpty(argu.reply))
+                            {
+                                replyText = argu.reply;
+                                // 追加 tool 响应消息
+                                SendToolResponse(toolCall.id, argu.reply);
                             }
                         }
-                        else if (choice.message.function_call.name == "generateCrudQuery")
+                        else if (toolCall.function.name == "generateCrudQuery")
                         {
-                            var arr = JsonUtility.FromJson<ChatResposeClass.ChatResponse.CrudFunctionArgu>(choice.message.function_call.arguments);
-                            OnSelectSQLGen(arr.generatedQuery, arr.undoQuery);
-                            if (arr.reply != string.Empty)
+                            OnSelectSQLGen(arguments["generatedQuery"], arguments["undoQuery"]);
+                            if (!string.IsNullOrEmpty(arguments.GetValueOrDefault("reply")))
                             {
-                                replyText = arr.reply;
+                                replyText = arguments["reply"];
+                                SendToolResponse(toolCall.id, arguments["reply"]);
                             }
                         }
-                        else if (choice.message.function_call.name == "generateReplyWithEmotion")
+                        else if (toolCall.function.name == "generateReplyWithEmotion")
                         {
-                            var arr = JsonUtility.FromJson<ChatResposeClass.ChatResponse.EmotionArgu>(choice.message.function_call.arguments);
-                            OnEmotionChange(arr.emotion);
-                            replyText = arr.replyContent;
+                            OnEmotionChange(arguments["emotion"]);
+                            replyText = arguments["replyContent"];
+                            SendToolResponse(toolCall.id, arguments["replyContent"]);
                         }
                     }
                     else if (choice.finish_reason == "stop")
@@ -95,16 +106,36 @@ namespace Module.chat
                         chatData.Add(choice.message.role, replyText);
                         chatData.SaveToLocal();
 
-                        // 使用协程合成并播放语音
                         CoroutineManager.Instance.StartManagedCoroutine(SynthesizeAndPlayAudio(replyText));
                     }
                 }
             }
         }
 
-        /// <summary>
-        /// 协程：合成并播放语音，播放后删除文件
-        /// </summary>
+        public void SendToolResponse(string toolCallId, string content)
+        {
+            var body = new ChatRequestClass.ChatRequestBody();
+            body.model = ConfigManager.Instance.Network.Model;
+            body.messages = new List<ChatRequestClass.ChatRequestBody.Message>(chatData.History.ConvertAll(h => new ChatRequestClass.ChatRequestBody.Message { role = h.Role, content = h.Content }));
+            body.messages.Add(new ChatRequestClass.ChatRequestBody.Message { role = "tool", tool_call_id = toolCallId, content = content });
+            body.tools = new List<ChatRequestClass.ChatRequestBody.Tool>
+    {
+        new ChatRequestClass.ChatRequestBody.Tool { type = "function", function = new ChatRequestClass.SelectFunctionCalling() },
+        new ChatRequestClass.ChatRequestBody.Tool { type = "function", function = new ChatRequestClass.CrudFunctionCalling() },
+        new ChatRequestClass.ChatRequestBody.Tool { type = "function", function = new ChatRequestClass.ReplyWithEmotionFunctionCalling() }
+    };
+
+            var sendMsgRequest = new ChatRequest();
+            sendMsgRequest.Config.URL += "/chat/completions";
+            sendMsgRequest.Config.Headers["Authorization"] += $"Bearer {ConfigManager.Instance.Network.apiKey}";
+            sendMsgRequest.RequestBody = body;
+
+            string jsonRequest = JsonConvert.SerializeObject(body, Formatting.Indented);
+            Debug.Log("Sending tool response: " + jsonRequest);
+
+            NetworkManager.Instance.SendMessage(sendMsgRequest);
+        }
+
         private IEnumerator SynthesizeAndPlayAudio(string text)
         {
             SynthesizerController synthesizer = GameObject.FindObjectOfType<SynthesizerController>();
@@ -123,17 +154,14 @@ namespace Module.chat
                 yield return new WaitForSeconds(0.1f);
             }
             overTime = 0;
-            // 播放音频
             SpeechManager.Instance.PlayDynamicSound(audioFilePath);
 
-            // 等待播放完成
             while (SpeechManager.Instance.IsPlaying() && overTime < 1000)
             {
                 overTime++;
-                yield return new WaitForSeconds(0.1f);  // 每 100ms 检查一次
+                yield return new WaitForSeconds(0.1f);
             }
 
-            // 删除音频文件
             if (File.Exists(audioFilePath))
             {
                 File.Delete(audioFilePath);
@@ -165,7 +193,7 @@ namespace Module.chat
 
         private bool isProcessingQuery = false;
 
-        private void OnGPTSelectResponse(ChatResposeClass.ChatResponse.SelectFunctionArgu arr)
+        private void OnGPTSelectResponse(ChatResponseClass.ChatResponse.SelectFunctionArgu arr)
         {
             if (isProcessingQuery) return;
             isProcessingQuery = true;
@@ -225,11 +253,11 @@ namespace Module.chat
 
         public void OnSendChatMessage(string prompt, string msg)
         {
-            var body = new ChatRequestClass.ChatReuestBody();
+            var body = new ChatRequestClass.ChatRequestBody();
             body.model = ConfigManager.Instance.Network.Model;
-            body.messages = new();
-            body.messages.Add(new ChatRequestClass.ChatReuestBody.Message() { role = "system", content = $"这是角色提示词{prompt}，现在的时间是{DateTime.Now.ToString()};以下是长期记忆：{Pet.Instance.attributes.importantMemories}。以下是今天的和用户的历史对话：" + GetChatHistoryLast24HoursAsString() });
-            body.messages.Add(new ChatRequestClass.ChatReuestBody.Message() { role = "user", content = msg });
+            body.messages = new List<ChatRequestClass.ChatRequestBody.Message>();
+            body.messages.Add(new ChatRequestClass.ChatRequestBody.Message { role = "system", content = $"这是角色提示词{prompt}，现在的时间是{DateTime.Now.ToString()};以下是长期记忆：{Pet.Instance.attributes.importantMemories}。以下是今天的和用户的历史对话：" + GetChatHistoryLast24HoursAsString() });
+            body.messages.Add(new ChatRequestClass.ChatRequestBody.Message { role = "user", content = msg });
             body.safe_mode = false;
 
             var sendMsgRequest = new ChatRequest();
@@ -240,36 +268,37 @@ namespace Module.chat
             NetworkManager.Instance.SendMessage(sendMsgRequest);
         }
 
-        public void OnSendFunctionRequest(string prompt, string msg = null, string func = null)
+        public void OnSendFunctionRequest(string prompt, string msg = null, string toolName = null)
         {
-            var body = new ChatRequestClass.ChatReuestBody();
+            var body = new ChatRequestClass.ChatRequestBody();
             body.model = ConfigManager.Instance.Network.Model;
-            body.messages = new();
-            body.messages.Add(new ChatRequestClass.ChatReuestBody.Message() { role = "system",
-                content = $"这是角色提示词{prompt}，现在的时间是{DateTime.Now.ToString()};以下是长期记忆：{Pet.Instance.attributes.importantMemories}。以下是今天的和用户的历史对话："+ GetChatHistoryLast24HoursAsString()});
+            body.messages = new List<ChatRequestClass.ChatRequestBody.Message>();
+            body.messages.Add(new ChatRequestClass.ChatRequestBody.Message
+            {
+                role = "system",
+                content = $"这是角色提示词{prompt}，现在的时间是{DateTime.Now.ToString()};以下是长期记忆：{Pet.Instance.attributes.importantMemories}。以下是今天的和用户的历史对话：" + GetChatHistoryLast24HoursAsString()
+            });
             if (msg != null)
             {
-                body.messages.Add(new ChatRequestClass.ChatReuestBody.Message() { role = "user", content = msg });
+                body.messages.Add(new ChatRequestClass.ChatRequestBody.Message { role = "user", content = msg });
                 chatData.Add("user", msg);
             }
-            body.functions = new()
-            {
-                new ChatRequestClass.SelectFunctionCalling(),
-                new ChatRequestClass.CrudFunctionCalling(),
-                new ChatRequestClass.ReplyWithEmotionFunctionCalling()
-            };
 
-            if (func != null)
-            {
-                body.function_call = new ChatRequestClass.ChatReuestBody.FunctionCall() { name = func };
-            }
-            else
-                body.function_call = "auto";
+            body.tools = new List<ChatRequestClass.ChatRequestBody.Tool>
+    {
+        new ChatRequestClass.ChatRequestBody.Tool { type = "function", function = new ChatRequestClass.SelectFunctionCalling() },
+        new ChatRequestClass.ChatRequestBody.Tool { type = "function", function = new ChatRequestClass.CrudFunctionCalling() },
+        new ChatRequestClass.ChatRequestBody.Tool { type = "function", function = new ChatRequestClass.ReplyWithEmotionFunctionCalling() }
+    };
 
             var sendMsgRequest = new ChatRequest();
-            sendMsgRequest.Config.URL += "/vchat/completions";
+            sendMsgRequest.Config.URL += "/chat/completions";
             sendMsgRequest.Config.Headers["Authorization"] += $"Bearer {ConfigManager.Instance.Network.apiKey}";
             sendMsgRequest.RequestBody = body;
+
+            // 使用 Newtonsoft.Json 序列化并打印调试信息
+            string jsonRequest = JsonConvert.SerializeObject(body, Formatting.Indented);
+            Debug.Log("Sending request: " + jsonRequest);
 
             NetworkManager.Instance.SendMessage(sendMsgRequest, (bool value) =>
             {
@@ -280,15 +309,17 @@ namespace Module.chat
                 }
             });
         }
+
         public string GetChatHistoryLast24HoursAsString()
         {
             long now = DateTimeOffset.Now.ToUnixTimeSeconds();
-            long twentyFourHoursAgo = now - 86400; // 24小时 = 86400秒
+            long twentyFourHoursAgo = now - 86400;
             var recentMessages = chatData.History
                 .FindAll(msg => msg.Timestamp >= twentyFourHoursAgo)
                 .ConvertAll(msg => $"{msg.Role}: {msg.Content}");
             return string.Join("\n", recentMessages);
         }
+
         public List<ChatData.ChatMessage> GetChatHistory()
         {
             return chatData.History;

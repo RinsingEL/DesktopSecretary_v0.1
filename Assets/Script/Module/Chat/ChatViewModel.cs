@@ -1,4 +1,4 @@
-using Com.Module.Chat;
+/*using Com.Module.Chat;
 using Core.Framework.Config;
 using Core.Framework.Event;
 using Core.Framework.Network.ChatSystem;
@@ -61,4 +61,4 @@ public class ChatViewModel
         EventManager.Instance.RemoveEvent<string ,string>(ClientEvent.ON_SEND_CHAT_REQUEST, OnSendChatMessage);
         EventManager.Instance.RemoveEvent<string ,string, string>(ClientEvent.ON_SEND_FUNC_REQUEST, OnSendFunctionRequest);
     }
-}
+}*/

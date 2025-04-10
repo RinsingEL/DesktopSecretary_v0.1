@@ -1,248 +1,205 @@
-using System.Collections;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
-using Core.Framework.Network;
-using System;
-using UnityEngine.UIElements;
+
 namespace Core.Framework.Network.ChatSystem
 {
     public static class ChatRequestClass
     {
         [Serializable]
-        public class ChatReuestBody
+        public class ChatRequestBody
         {
             [Serializable]
             public class Message
             {
                 public string role;
                 public string content;
-                public Message() { }
+                public string tool_call_id;
             }
 
             [Serializable]
-            public class FunctionCall
+            public class Tool
             {
-                public string name;
+                public string type = "function";
+                public object function; // 可以是 SelectFunctionCalling、CrudFunctionCalling 等
             }
 
             public string model;
             public List<Message> messages;
             public bool safe_mode;
-            public List<object> functions;
-            public object function_call;
+            public List<Tool> tools; // 使用明确的 Tool 类型
         }
 
+        // 函数 1: 生成 SQL SELECT 查询
         [Serializable]
         public class SelectFunctionCalling
         {
             public string name = "generateSelectQuery";
-            public string description = "This function generates a SQL SELECT query for the 'Tasks' table in a local SQLite database based on user intent. Database schema: Table 'Tasks': - TaskID (int, primary key) - Title (text, not null) - Description (text, nullable) - Priority (int, default 2) - Status (int, default 0) - DueDate (datetime, nullable) - StartedAt (datetime, not null) - UpdatedAt (datetime, not null).";
-            public ParametersSelect parameters = new ParametersSelect();
+            public string description = "生成基于用户意图的本地 SQLite 数据库 'Tasks' 表的 SQL SELECT 查询。数据库模式：Tasks 表包含 TaskID (int, 主键), Title (text, 非空), Description (text, 可空), Priority (int, 默认 2), Status (int, 默认 0), DueDate (datetime, 可空), StartedAt (datetime, 非空), UpdatedAt (datetime, 非空)。";
+            public Parameters parameters = new Parameters();
+
+            [Serializable]
+            public class Parameters
+            {
+                public string type = "object";
+                public Properties properties = new Properties();
+                public string[] required = new string[] { "reply", "intent", "generatedSelect" };
+                public bool additionalProperties = false;
+            }
+
+            [Serializable]
+            public class Properties
+            {
+                public Property reply = new Property { type = "string", description = "中文回复" };
+                public Property intent = new Property { type = "string", description = "用户查询意图，例如 '查找今天到期的任务'" };
+                public Property generatedSelect = new Property { type = "string", description = "生成的 SQL SELECT 语句，例如 'SELECT * FROM Tasks WHERE DueDate = \"2025-03-05\"'" };
+            }
+
+            [Serializable]
+            public class Property
+            {
+                public string type;
+                public string description;
+            }
         }
 
-        [Serializable]
-        public class ParametersSelect
-        {
-            public string type = "object";
-            public PropertiesSelect properties = new PropertiesSelect();
-            public string[] required = new string[] {"reply", "intent", "generatedSelect" };
-            public bool additionalProperties = false;
-            public bool strict = true; // 移到 parameters 内部
-        }
-
-        [Serializable]
-        public class PropertiesSelect
-        {
-            public Reply reply = new Reply();
-            public Intent intent = new Intent();
-            public GeneratedSelect generatedSelect = new GeneratedSelect();
-        }
-        [Serializable]
-        public class Reply
-        {
-            public string type = "string";
-            public string description = "the reply in Chinese";
-        }
-
-        [Serializable]
-        public class Intent
-        {
-            public string type = "string";
-            public string description = "The user's intent for querying data, e.g., 'find tasks due today'.";
-        }
-
-        [Serializable]
-        public class GeneratedSelect
-        {
-            public string type = "string";
-            public string description = @"The generated SQL SELECT statement, e.g., 'SELECT * FROM Tasks WHERE DueDate = ""2025-03-05""'.
-                                          'SELECT * FROM Tasks WHERE StartAt = ""2025-03-05""'";
-        }
-        // CRUD 操作类
+        // 函数 2: 生成 CRUD 查询
         [Serializable]
         public class CrudFunctionCalling
         {
             public string name = "generateCrudQuery";
-            public string description = @"This function generates a SQL query (INSERT, UPDATE, DELETE, or SELECT) for the 'Tasks' table in a local SQLite database based on user intent. 
-                                         Database schema: Table 'Tasks': 
-                                         - TaskID (int, primary key) 
-                                         - Title (text, not null) 
-                                         - Description (text, nullable) 
-                                         - Priority (int, default 2) 
-                                         - Status (int, default 0) 
-                                         - DueDate (datetime, nullable) 
-                                         - StartedAt (datetime, not null) 
-                                         - UpdatedAt (datetime, not null). ";
-            public ParametersCrud parameters = new ParametersCrud();
+            public string description = "根据用户意图生成针对本地 SQLite 数据库 'Tasks' 表的 SQL 查询（INSERT、UPDATE、DELETE 或 SELECT）。数据库模式：Tasks 表包含 TaskID (int, 主键), Title (text, 非空), Description (text, 可空), Priority (int, 默认 2), Status (int, 默认 0), DueDate (datetime, 可空), StartedAt (datetime, 非空), UpdatedAt (datetime, 非空)。";
+            public Parameters parameters = new Parameters();
+
             [Serializable]
-            public class ParametersCrud
+            public class Parameters
             {
                 public string type = "object";
-                public PropertiesCrud properties = new PropertiesCrud();
-                public string[] required = new string[] { "reply" , "intent", "generatedQuery", "undoQuery" };
+                public Properties properties = new Properties();
+                public string[] required = new string[] { "reply", "intent", "generatedQuery", "undoQuery" };
                 public bool additionalProperties = false;
-                public bool strict = true;
             }
 
             [Serializable]
-            public class PropertiesCrud
+            public class Properties
             {
-                public Reply reply = new Reply();
-                public Intent intent = new Intent();
-                public GeneratedQuery generatedQuery = new GeneratedQuery();
-                public UndoQuery undoQuery = new UndoQuery();
-            }
-            [Serializable]
-            public class Reply
-            {
-                public string type = "string";
-                public string description = "the reply in Chinese .e.g.,‘好的，我帮你处理了’";
-            }
-            [Serializable]
-            public class CrudIntent
-            {
-                public string type = "string";
-                public string description = "The user's intent for the CRUD operation, e.g., 'add a task with title \"Meeting\" due tomorrow' or 'delete task with ID 1'.";
+                public Property reply = new Property { type = "string", description = "中文回复，例如 '好的，我帮你处理了'" };
+                public Property intent = new Property { type = "string", description = "用户 CRUD 操作意图，例如 '添加标题为“会议”的任务，明天到期' 或 '删除 ID 为 1 的任务'" };
+                public Property generatedQuery = new Property { type = "string", description = "生成的 SQL 查询，例如 'INSERT INTO Tasks (Title, DueDate, StartedAt, UpdatedAt) VALUES (\"Meeting\", \"2025-03-06\", \"2025-03-05\", \"2025-03-05\")'" };
+                public Property undoQuery = new Property { type = "string", description = "撤销操作的 SQL 查询，例如 INSERT 的撤销为 'DELETE FROM Tasks WHERE TaskID = (last_inserted_id)'" };
             }
 
             [Serializable]
-            public class GeneratedQuery
+            public class Property
             {
-                public string type = "string";
-                public string description = "The generated SQL query, e.g., 'INSERT INTO Tasks (Title, DueDate, StartedAt, UpdatedAt) VALUES (\"Meeting\", \"2025-03-06\", \"2025-03-05\", \"2025-03-05\")'.";
-            }
-
-            [Serializable]
-            public class UndoQuery
-            {
-                public string type = "string";
-                public string description = "The SQL query to undo the operation, e.g., 'DELETE FROM Tasks WHERE TaskID = (last_inserted_id)' for INSERT, or 'INSERT INTO Tasks (...) VALUES (...)' for DELETE.";
+                public string type;
+                public string description;
             }
         }
+
+        // 函数 3: 生成带情感的回复
         [Serializable]
         public class ReplyWithEmotionFunctionCalling
         {
             public string name = "generateReplyWithEmotion";
-            public string description = @"This function generates a reply message with an associated emotion based on user input or context. 
-                                         The reply includes the content of the message and an emotion type to reflect the tone or sentiment.";
-            public ParametersReplyWithEmotion parameters = new ParametersReplyWithEmotion();
+            public string description = "根据用户输入或上下文生成带有情感的回复消息，回复包括消息内容和反映语气或情感的情感类型。";
+            public Parameters parameters = new Parameters();
 
             [Serializable]
-            public class ParametersReplyWithEmotion
+            public class Parameters
             {
                 public string type = "object";
-                public PropertiesReplyWithEmotion properties = new PropertiesReplyWithEmotion();
+                public Properties properties = new Properties();
                 public string[] required = new string[] { "replyContent", "emotion" };
                 public bool additionalProperties = false;
-                public bool strict = true;
             }
 
             [Serializable]
-            public class PropertiesReplyWithEmotion
+            public class Properties
             {
-                public ReplyContent replyContent = new ReplyContent();
-                public Emotion emotion = new Emotion();
+                public Property replyContent = new Property { type = "string", description = "回复消息内容，例如 '干得漂亮，任务完成了！' 或 '抱歉，我找不到那个。'" };
+                public EmotionProperty emotion = new EmotionProperty();
             }
 
             [Serializable]
-            public class ReplyContent
+            public class Property
+            {
+                public string type;
+                public string description;
+            }
+
+            [Serializable]
+            public class EmotionProperty
             {
                 public string type = "string";
-                public string description = "The content of the reply message, e.g., 'Great job completing the task!' or 'Sorry, I couldn’t find that.'.";
-            }
-
-            [Serializable]
-            public class Emotion
-            {
-                public string type = "string";
-                public string description = "The emotion associated with the reply, e.g., \"happy\", \"sad\", \"confuse\", \"mad\", \"shy\".";
-                public string[] enumValues = new string[] { "happy", "sad", "confuse", "mad", "shy" };
+                public string description = "只有情感强烈是才会从以下枚举里面选择表情展现，有 'happy'、'sad'、'confuse'、'mad'、'shy'";
+                public string[] @enum = new string[] { "happy", "sad", "confuse", "mad", "shy" }; // @enum 用于避免 C# 关键字冲突
             }
         }
     }
-    public static class ChatResposeClass
+
+    namespace Core.Framework.Network.ChatSystem
     {
-        [Serializable]
-        public class ChatResponse
+        public static class ChatResponseClass
         {
-            public string id;
-            public string @object;
-            public long created;
-            public string model;
-            public Choice[] choices;
-            public Usage usage;
+            [Serializable]
+            public class ChatResponse
+            {
+                public string id;
+                public string @object;
+                public long created;
+                public string model;
+                public Choice[] choices;
+                public Usage usage;
 
-            [Serializable]
-            public class Choice
-            {
-                public int index;
-                public Message message;
-                public string finish_reason;
-            }
+                [Serializable]
+                public class Choice
+                {
+                    public int index;
+                    public Message message;
+                    public string finish_reason;
+                }
 
-            [Serializable]
-            public class Message
-            {
-                public string role;
-                public string content;
-                public FunctionCall function_call;
-            }
+                [Serializable]
+                public class Message
+                {
+                    public string role;
+                    public string content;
+                    public FunctionCall function_call; // 保留以兼容旧代码
+                    public ToolCall[] tool_calls; // 新增支持工具调用
+                }
 
-            [Serializable]
-            public class FunctionCall
-            {
-                public string name;
-                public string arguments; //要进一步解析
-            }
-            [Serializable]
-            public class SelectFunctionArgu
-            {
-                public string reply;
-                public string intent;
-                public string generatedSelect;
-            }
-            [Serializable]
-            public class Usage
-            {
-                public int prompt_tokens;
-                public int completion_tokens;
-                public int total_tokens;
-            }
-            [Serializable]
-            public class CrudFunctionArgu
-            {
-                public string reply;
-                public string crudIntent;
-                public string generatedQuery;
-                public string undoQuery;
-            }
-            [Serializable]
-            public class EmotionArgu
-            {
-                public string replyContent;
-                public string emotion;
+                [Serializable]
+                public class FunctionCall
+                {
+                    public string name;
+                    public string arguments;
+                }
+
+                [Serializable]
+                public class ToolCall
+                {
+                    public string id;
+                    public string type;
+                    public FunctionCall function;
+                }
+
+                [Serializable]
+                public class Usage
+                {
+                    public int prompt_tokens;
+                    public int completion_tokens;
+                    public int total_tokens;
+                }
+
+                [Serializable]
+                public class SelectFunctionArgu
+                {
+                    public string reply;
+                    public string intent;
+                    public string generatedSelect;
+                }
             }
         }
     }
 }
-
