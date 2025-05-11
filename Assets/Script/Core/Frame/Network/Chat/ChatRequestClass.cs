@@ -102,7 +102,7 @@ namespace Core.Framework.Network.ChatSystem
         public class ReplyWithEmotionFunctionCalling
         {
             public string name = "generateReplyWithEmotion";
-            public string description = "根据用户输入或上下文生成带有情感的回复消息，并评估对话对好感度的影响。";
+            public string description = "根据用户输入或上下文生成带情感的回复消息，返回一个键值对列表，每个键值对包含表情（键）和对应的句子（值），并评估对话对好感度的影响。";
             public Parameters parameters = new Parameters();
 
             [Serializable]
@@ -110,16 +110,38 @@ namespace Core.Framework.Network.ChatSystem
             {
                 public string type = "object";
                 public Properties properties = new Properties();
-                public string[] required = new string[] { "replyContent", "emotion", "favorabilityImpact" };
+                public string[] required = new string[] { "emotionContentPairs", "favorabilityImpact" };
                 public bool additionalProperties = false;
             }
 
             [Serializable]
             public class Properties
             {
-                public Property replyContent = new Property { type = "string", description = "回复消息内容，例如 '干得漂亮，任务完成了！' 或 '抱歉，我找不到那个。'" };
-                public EmotionProperty emotion = new EmotionProperty();
+                public EmotionContentPairsProperty emotionContentPairs = new EmotionContentPairsProperty();
                 public Property favorabilityImpact = new Property { type = "number", description = "对话对好感度的影响值，范围为 -5 到 +3" };
+            }
+
+            [Serializable]
+            public class EmotionContentPairsProperty
+            {
+                public string type = "array";
+                public string description = "键值对列表，每个元素包含表情（emotion）和对应的句子（content）";
+                public PairItem items = new PairItem();
+            }
+
+            [Serializable]
+            public class PairItem
+            {
+                public string type = "object";
+                public PairProperties properties = new PairProperties();
+                public string[] required = new string[] { "emotion", "content" };
+            }
+
+            [Serializable]
+            public class PairProperties
+            {
+                public EmotionProperty emotion = new EmotionProperty();
+                public Property content = new Property { type = "string", description = "该表情对应的句子，例如 '干得漂亮！' 或 '让我再想想…'" };
             }
 
             [Serializable]
@@ -133,8 +155,8 @@ namespace Core.Framework.Network.ChatSystem
             public class EmotionProperty
             {
                 public string type = "string";
-                public string description = "与回复相关的情感，例如 'happy'、'sad'、'confuse'、'mad'、'shy'";
-                public string[] @enum = new string[] { "happy", "sad", "confuse", "mad", "shy" };
+                public string description = "表情，例如 'happy'、'sad'、'mad'、'shy'";
+                public string[] @enum = new string[] { "happy", "sad", "mad", "shy" };
             }
         }
 
@@ -178,6 +200,7 @@ namespace Core.Framework.Network.ChatSystem
             [Serializable]
             public class ChatResponse
             {
+                // 其他字段保持不变
                 public string id;
                 public string @object;
                 public long created;
@@ -198,8 +221,8 @@ namespace Core.Framework.Network.ChatSystem
                 {
                     public string role;
                     public string content;
-                    public FunctionCall function_call; // 保留以兼容旧代码
-                    public ToolCall[] tool_calls; // 新增支持工具调用
+                    public FunctionCall function_call;
+                    public ToolCall[] tool_calls;
                 }
 
                 [Serializable]
@@ -235,10 +258,17 @@ namespace Core.Framework.Network.ChatSystem
                 [Serializable]
                 public class ReplyWithEmotionArgu
                 {
-                    public string replyContent;
-                    public string emotion;
+                    public EmotionContentPair[] emotionContentPairs;
                     public float favorabilityImpact;
+
+                    [Serializable]
+                    public class EmotionContentPair
+                    {
+                        public string emotion;
+                        public string content;
+                    }
                 }
+
                 [Serializable]
                 public class CheckFocusArgu
                 {

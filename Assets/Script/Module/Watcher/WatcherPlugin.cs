@@ -31,8 +31,8 @@ namespace Com.Module.Watcher
         }
 
         private string checkCoroutineId; // 检查协程ID
-        private float minCheckInterval = 480f; // 最小检查间隔（秒）
-        private float maxCheckInterval = 720f; // 最大检查间隔（秒）
+        private float minCheckInterval = 30f; // 最小检查间隔（秒）
+        private float maxCheckInterval = 60f; // 最大检查间隔（秒）
         private string currentTaskTitle; // 当前任务标题
         private bool IsFocus = false;
 

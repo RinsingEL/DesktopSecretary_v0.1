@@ -5,8 +5,10 @@ using Core.Framework.Network;
 using Core.Framework.Network.ChatSystem;
 using FairyGUI;
 using Live2D.Cubism.Core;
+using Live2D.Cubism.Framework.MouthMovement;
 using Live2D.Cubism.Framework.Raycasting;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -31,6 +33,7 @@ namespace Core.Framework.Pet
         private List<CubismRaycastable> rayAbles = new List<CubismRaycastable>();
         private CubismRaycaster rayCaster;
         private CubismModel cubismModel;
+        private CubismMouthController cubismMouthController;
         private bool isActive = false; // 是否正在交互
         public static Pet Instance;
         public PetAttributes attributes;
@@ -51,6 +54,11 @@ namespace Core.Framework.Pet
             rayCaster = GetComponent<CubismRaycaster>();
             animator = GetComponent<Animator>();
             attributes = GetComponent<PetAttributes>();
+            cubismMouthController = GetComponent<CubismMouthController>();
+            CloseMouth();
+
+            if (cubismMouthController)
+                cubismMouthController.BlendMode = Live2D.Cubism.Framework.CubismParameterBlendMode.Override;
 
             if (Instance == null)
                 Instance = this;
@@ -240,6 +248,30 @@ namespace Core.Framework.Pet
             else
             {
                 Debug.Log("今天摸头次数已达上限！");
+            }
+        }
+        public IEnumerator Speek()
+        {
+            // 开嘴（0 到 1）
+            float charDelay = 0.5f; // 与 UpdateStrByStep 的 charDelay 一致
+            float elapsedTime = 0f;
+
+            // 使用 Mathf.Sin 实现平滑开合
+            while (true) // 持续运行，直到协程被外部停止
+            {
+                elapsedTime += Time.deltaTime;
+                float t = (elapsedTime % charDelay) / charDelay;
+                cubismMouthController.MouthOpening = t < 0.5f ? Mathf.Lerp(0f, 1f, t / 0.5f) : Mathf.Lerp(1f, 0f, (t - 0.5f) / 0.5f);
+                yield return null;
+            }
+        }
+
+        // 恢复嘴部关闭状态
+        public void CloseMouth()
+        {
+            if (cubismMouthController != null)
+            {
+                cubismMouthController.MouthOpening = 0f;
             }
         }
 

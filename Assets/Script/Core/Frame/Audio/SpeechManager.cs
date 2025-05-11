@@ -89,16 +89,27 @@ public class SpeechManager : MonoBehaviour
         {
             yield return www.SendWebRequest();
 
-            if (www.result == UnityWebRequest.Result.Success)
+            if (www.result != UnityWebRequest.Result.Success)
+            {
+                Debug.LogError($"SpeechManager: 加载音频文件失败: {filePath}, 错误: {www.error}");
+                yield break;
+            }
+
+            try
             {
                 AudioClip clip = DownloadHandlerAudioClip.GetContent(www);
+                if (clip == null)
+                {
+                    Debug.LogError($"SpeechManager: 无法创建 AudioClip，文件可能损坏或格式不受支持: {filePath}");
+                    yield break;
+                }
                 clip.name = Path.GetFileNameWithoutExtension(filePath);
                 Debug.Log($"SpeechManager: 成功加载音频文件: {filePath}");
                 PlaySound(clip, volume, loop);
             }
-            else
+            catch (System.Exception e)
             {
-                Debug.LogError($"SpeechManager: 加载音频文件失败: {filePath}, 错误: {www.error}");
+                Debug.LogError($"SpeechManager: 加载 AudioClip 失败: {filePath}, 错误: {e.Message}");
             }
         }
     }

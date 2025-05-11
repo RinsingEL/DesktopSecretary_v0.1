@@ -16,15 +16,17 @@ public class SynthesizerController : MonoBehaviour
         pythonProcess.StartInfo.FileName = "cmd.exe";
         pythonProcess.StartInfo.Arguments = $"/K {pythonPath} \"{scriptPath}\"";
         pythonProcess.StartInfo.WorkingDirectory = workingDir;
-        pythonProcess.StartInfo.UseShellExecute = true;  // 使用 Shell 显示窗口
+        pythonProcess.StartInfo.UseShellExecute = true;
+        pythonProcess.StartInfo.Verb = "runas"; // 以管理员身份运行
         pythonProcess.Start();
-
     }
 
     public void Synthesize(string text)
     {
-        // 写入合成指令到文件
-        File.WriteAllText(commandFile, $"synth:{text}", System.Text.Encoding.UTF8);
+        string command = $"synth:{text}";
+        // 使用不带 BOM 的 UTF-8 编码
+        File.WriteAllText(commandFile, command, new System.Text.UTF8Encoding(false));
+        UnityEngine.Debug.Log($"写入指令: {command}");
     }
 
     void OnApplicationQuit()
@@ -41,9 +43,12 @@ public class SynthesizerController : MonoBehaviour
 
     void Update()
     {
+#if UNITY_EDITOR
+
         if (Input.GetKeyDown(KeyCode.Space))
         {
             Synthesize("你好呀，这里是测试语音");
         }
+#endif
     }
 }

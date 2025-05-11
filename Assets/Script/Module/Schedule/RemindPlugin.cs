@@ -59,7 +59,7 @@ public class RemindPlugin : PluginBase
     private List<DBClass.Task> GetAllValidTasks()
     {
         return _viewModel.GetAllTasks().FindAll(t => 
-            t.Status == 0); // 只处理未完成的任务
+            t.Status == 0 && t.Status == 1); // 只处理未完成的任务
     }
 
     private bool ShouldRemind(DBClass.Task task)

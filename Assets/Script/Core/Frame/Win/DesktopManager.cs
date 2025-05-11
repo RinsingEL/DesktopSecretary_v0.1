@@ -1,6 +1,7 @@
 using Com.Module.Chat;
 using Com.Module.Schedule;
 using Core.Framework.FGUI;
+using Core.Framework.Pet;
 using System;
 using System.Runtime.InteropServices;
 using UnityEngine;
@@ -246,6 +247,7 @@ public class DesktopManager : MonoBehaviour
                 if(window.Param.HideByDisappear)
                     window.Hide();
             }
+            Pet.Instance.CloseMouth();
         }
     }
     #endregion

@@ -17,6 +17,8 @@ using System.IO;
 using Core.Framework.Utility;
 using Core.Framework.Pet;
 using Core.Framework.Network.ChatSystem.Core.Framework.Network.ChatSystem;
+using static Com.Module.Chat.DialoguePanel;
+using System.Linq;
 
 namespace Module.chat
 {
@@ -58,46 +60,75 @@ namespace Module.chat
                     if (choice.finish_reason == "tool_calls" && choice.message.tool_calls != null && choice.message.tool_calls.Length > 0)
                     {
                         var toolCall = choice.message.tool_calls[0];
-                        var arguments = JsonConvert.DeserializeObject<Dictionary<string, string>>(toolCall.function.arguments);
 
                         if (toolCall.function.name == "generateSelectQuery")
                         {
-                            var argu = new ChatResponseClass.ChatResponse.SelectFunctionArgu
+                            var arguments = JsonConvert.DeserializeObject<ChatResponseClass.ChatResponse.SelectFunctionArgu>(toolCall.function.arguments);
+                            OnGPTSelectResponse(arguments);
+                            if (!string.IsNullOrEmpty(arguments.reply))
                             {
-                                reply = arguments.GetValueOrDefault("reply", ""),
-                                intent = arguments["intent"],
-                                generatedSelect = arguments["generatedSelect"]
-                            };
-                            OnGPTSelectResponse(argu);
-                            if (!string.IsNullOrEmpty(argu.reply))
-                            {
-                                replyText = argu.reply;
-                                // 追加 tool 响应消息
-                                SendToolResponse(toolCall.id, argu.reply);
+                                replyText = arguments.reply;
+                                //SendToolResponse(toolCall.id, arguments.reply);
                             }
                         }
                         else if (toolCall.function.name == "generateCrudQuery")
                         {
+                            var arguments = JsonConvert.DeserializeObject<Dictionary<string, string>>(toolCall.function.arguments);
                             OnSelectSQLGen(arguments["generatedQuery"], arguments["undoQuery"]);
                             if (!string.IsNullOrEmpty(arguments.GetValueOrDefault("reply")))
                             {
                                 replyText = arguments["reply"];
-                                SendToolResponse(toolCall.id, arguments["reply"]);
+                               //SendToolResponse(toolCall.id, arguments["reply"]);
                             }
                         }
                         else if (toolCall.function.name == "generateReplyWithEmotion")
                         {
-                            OnEmotionChange(arguments["emotion"]);
-                            replyText = arguments["replyContent"];
-                            SendToolResponse(toolCall.id, arguments["replyContent"]);
+                            try
+                            {
+                                var arguments = JsonConvert.DeserializeObject<ChatResponseClass.ChatResponse.ReplyWithEmotionArgu>(toolCall.function.arguments);
+                                //Pet.Instance.attributes.UpdateFavorability(arguments.favorabilityImpact);
+                                // 转换为键值对列表
+                                var emotionContentPairs = arguments.emotionContentPairs
+                                    .Select(pair => new KeyValuePair<string, string>(pair.emotion, pair.content))
+                                    .ToList();
+                                if (arguments.favorabilityImpact > 0)
+                                    Pet.Instance.attributes.IncreaseFavorability(arguments.favorabilityImpact);
+                                else
+                                    Pet.Instance.attributes.DecreaseFavorability(-1 * arguments.favorabilityImpact);
+
+                                string fullReplyText = string.Join("\n", emotionContentPairs.Select(pair => pair.Value));
+                                CoroutineManager.Instance.StartManagedCoroutine(SynthesizeAndPlayAudio(fullReplyText, () => {                                 
+                                    // 异步处理
+                                    CoroutineManager.Instance.StartManagedCoroutine(DisplayEmotionContentPairsAsync(emotionContentPairs));
+                                }));
+
+                            }
+                            catch (Exception e)
+                            {
+                                Debug.LogError($"Failed to deserialize ReplyWithEmotionArgu: {e.Message}");
+                                var errorText = "抱歉，处理回复时出错。";
+
+                                CoroutineManager.Instance.StartManagedCoroutine(SynthesizeAndPlayAudio(errorText , () => {
+                                    DialoguePanel.DialogueParam param = new DialogueParam { dialogue = errorText };
+                                    GUIManager.Instance.ShowWindow(param);
+                                    chatData.Add("assistant", errorText);
+                                    chatData.SaveToLocal();
+                                }));
+                            }
                         }
                         else if (toolCall.function.name == "checkFocus")
                         {
-                            var focusArgu = JsonConvert.DeserializeObject<ChatResponseClass.ChatResponse.CheckFocusArgu>(toolCall.function.arguments);
-                            replyText = focusArgu.replyContent;
-                            // 这里可以根据 focusResult 做额外处理，例如记录专注状态
-                            Debug.Log($"Focus Result: {focusArgu.focusResult}");
-                            SendToolResponse(toolCall.id, focusArgu.replyContent);
+                            var arguments = JsonConvert.DeserializeObject<ChatResponseClass.ChatResponse.CheckFocusArgu>(toolCall.function.arguments);
+                            replyText = arguments.replyContent;
+                            if(arguments.focusResult)
+                            {
+                                Pet.Instance.attributes.IncreaseFavorability(1);
+                            }
+                            else
+                            {
+                                Pet.Instance.attributes.DecreaseFavorability(5);
+                            }
+                            Debug.Log($"Focus Result: {arguments.focusResult}");
                         }
                     }
                     else if (choice.finish_reason == "stop")
@@ -109,17 +140,42 @@ namespace Module.chat
                     {
                         DialoguePanel.DialogueParam param = new DialoguePanel.DialogueParam();
                         param.dialogue = replyText;
-                        GUIManager.Instance.ShowWindow(param);
 
-                        chatData.Add(choice.message.role, replyText);
-                        chatData.SaveToLocal();
+                        CoroutineManager.Instance.StartManagedCoroutine(SynthesizeAndPlayAudio(replyText, () => {
+                            GUIManager.Instance.ShowWindow(param);
 
-                        CoroutineManager.Instance.StartManagedCoroutine(SynthesizeAndPlayAudio(replyText));
+                            chatData.Add(choice.message.role, replyText);
+                            chatData.SaveToLocal();
+                        }));
                     }
                 }
             }
         }
+        // 新增协程：异步显示键值对列表
+        private IEnumerator DisplayEmotionContentPairsAsync(List<KeyValuePair<string, string>> pairs)
+        {
+            foreach (var pair in pairs)
+            {
+                // 显示对话
+                DialoguePanel.DialogueParam param = new DialoguePanel.DialogueParam
+                {
+                    dialogue = pair.Value, // 句子
+                };
+                GUIManager.Instance.ShowWindow(param);
 
+                // 触发表情变化
+                OnEmotionChange(pair.Key);
+
+                // 保存历史
+                chatData.Add("assistant", pair.Value);
+
+                // 等待动画完成（固定延迟，2秒）
+                yield return new WaitForSeconds(2f);
+            }
+
+            // 保存历史
+            chatData.SaveToLocal();
+        }
         public void SendToolResponse(string toolCallId, string content)
         {
             var body = new ChatRequestClass.ChatRequestBody();
@@ -144,7 +200,7 @@ namespace Module.chat
             NetworkManager.Instance.SendMessage(sendMsgRequest);
         }
 
-        private IEnumerator SynthesizeAndPlayAudio(string text)
+        private IEnumerator SynthesizeAndPlayAudio(string text , Action OnComplite)
         {
             SynthesizerController synthesizer = GameObject.FindObjectOfType<SynthesizerController>();
             if (synthesizer == null)
@@ -153,27 +209,51 @@ namespace Module.chat
                 yield break;
             }
 
+            // 触发语音合成
             synthesizer.Synthesize(text);
-            int overTime = 0;
 
-            while (!File.Exists(audioFilePath) && overTime < 1000)
+            // 等待语音文件生成，最多 30 秒
+            float maxWaitTime = 15f;
+            float elapsedTime = 0f;
+
+            while (!File.Exists(audioFilePath) && elapsedTime < maxWaitTime)
             {
-                overTime++;
+                elapsedTime += 0.1f;
                 yield return new WaitForSeconds(0.1f);
             }
-            overTime = 0;
+
+            // 检查是否成功生成文件
+            if (!File.Exists(audioFilePath))
+            {
+                Debug.LogError($"语音文件未能在 {maxWaitTime} 秒内生成: {audioFilePath}");
+                OnComplite();//linww依旧生成
+                yield break;
+            }
+
+            // 播放生成的语音
             SpeechManager.Instance.PlayDynamicSound(audioFilePath);
+            OnComplite();
 
-            while (SpeechManager.Instance.IsPlaying() && overTime < 1000)
+            // 等待播放完成，最多 30 秒
+            elapsedTime = 0f;
+            while (SpeechManager.Instance.IsPlaying() && elapsedTime < maxWaitTime || elapsedTime < 3f)
             {
-                overTime++;
+                elapsedTime += 0.1f;
                 yield return new WaitForSeconds(0.1f);
             }
 
+            // 清理音频文件
             if (File.Exists(audioFilePath))
             {
-                File.Delete(audioFilePath);
-                Debug.Log($"SpeechManager: 已删除音频文件: {audioFilePath}");
+                try
+                {
+                    File.Delete(audioFilePath);
+                    Debug.Log($"SpeechManager: 已删除音频文件: {audioFilePath}");
+                }
+                catch (System.Exception e)
+                {
+                    Debug.LogWarning($"删除音频文件失败: {audioFilePath}, 错误: {e.Message}");
+                }
             }
         }
 
@@ -181,7 +261,6 @@ namespace Module.chat
         {
             EventManager.Instance.Trigger(ClientEvent.ON_PET_EMOTION_CHANGE, emo);
         }
-
         private void OnSelectSQLGen(string sql, string undo)
         {
             if (Regex.IsMatch(sql, @"\d{4}/\d{2}/\d{2}(?![\s\S]*\d{2}:\d{2}:\d{2})"))
@@ -236,7 +315,7 @@ namespace Module.chat
                 }
                 else
                 {
-                    OnSendChatMessage($"没有找到符合条件的数据。", arr.intent);
+                    OnSendChatMessage($"提醒用户没有在数据库内找到符合条件的数据。", arr.intent);
                 }
             });
         }
